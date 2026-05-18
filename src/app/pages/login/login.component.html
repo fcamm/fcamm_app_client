@@ -1,0 +1,44 @@
+<section class="login">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="brand-mark">FCAMM</div>
+      <h1>Connexion</h1>
+      <p>Acces rapide pour les operations de recu et donateur.</p>
+    </div>
+
+    <form class="login-form" autocomplete="on" (ngSubmit)="submit()">
+      <label class="field">
+        <span>Identifiant</span>
+        <input
+          type="text"
+          name="username"
+          placeholder="Votre identifiant"
+          inputmode="email"
+          autocomplete="username"
+          [(ngModel)]="model.userName"
+        />
+      </label>
+
+      <label class="field">
+        <span>Mot de passe</span>
+        <input
+          type="password"
+          name="password"
+          placeholder="Votre mot de passe"
+          autocomplete="current-password"
+          [(ngModel)]="model.password"
+        />
+      </label>
+
+      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button class="primary-btn" type="submit" [disabled]="!canSubmit || isSubmitting">
+        {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <span>App mobile optimisee</span>
+    </div>
+  </div>
+</section>

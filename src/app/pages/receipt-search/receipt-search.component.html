@@ -1,0 +1,87 @@
+<section class="receipt-search">
+  <header class="receipt-header">
+    <a class="back-link" routerLink="/menu">Retour</a>
+    <h1>Rechercher un recu</h1>
+    <p>Filtrez les recu et telechargez le PDF.</p>
+  </header>
+
+  <div class="search-card">
+    <div class="search-top">
+      <div class="search-bar">
+        <input
+          type="text"
+          name="search"
+          placeholder="Rechercher un donateur"
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+      <div class="receipt-count">
+        <span>{{ receiptCount }}</span>
+        <small>recu</small>
+      </div>
+    </div>
+
+    <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="loading-text" *ngIf="isLoading">Chargement des recus...</p>
+
+    <button class="filters-toggle" type="button" (click)="toggleFilters()">
+      <span class="burger" aria-hidden="true"></span>
+      Filtres
+    </button>
+
+    <div class="filters" [class.filters--open]="showFilters">
+      <label class="field">
+        <span>Ordre</span>
+        <select name="order" [(ngModel)]="sortOrder" (ngModelChange)="onFiltersChange()">
+          <option value="desc">Plus recent</option>
+          <option value="asc">Plus ancien</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Donateur</span>
+        <select name="donator" [(ngModel)]="donatorFilter" (ngModelChange)="onFiltersChange()">
+          <option value="">Tous</option>
+          <option *ngFor="let option of donatorOptions" [value]="option">{{ option }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Annee</span>
+        <select name="year" [(ngModel)]="yearFilter" (ngModelChange)="onFiltersChange()">
+          <option value="">Toutes</option>
+          <option *ngFor="let option of yearOptions" [value]="option">{{ option }}</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Mois</span>
+        <select name="month" [(ngModel)]="monthFilter" (ngModelChange)="onFiltersChange()">
+          <option value="">Tous</option>
+          <option *ngFor="let option of monthOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="list-card">
+    <div class="list-header">
+      <span>Date</span>
+      <span>Donateur</span>
+      <span>Montant</span>
+      <span>Telecharger</span>
+    </div>
+
+    <div class="list-row" *ngFor="let row of filteredReceipts">
+      <span data-label="Date">{{ row.date }}</span>
+      <span data-label="Donateur">{{ row.donator }}</span>
+      <span data-label="Montant">{{ row.amount.toFixed(2) }} €</span>
+      <button type="button" class="download-btn" (click)="downloadReceipt(row.id)">PDF</button>
+    </div>
+
+    <div class="empty" *ngIf="filteredReceipts.length === 0">
+      Aucun recu trouve.
+    </div>
+  </div>
+</section>

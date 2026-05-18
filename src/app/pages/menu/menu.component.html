@@ -1,0 +1,16 @@
+<section class="menu">
+  <header class="menu-header">
+    <span class="menu-chip">Menu principal</span>
+    <h1>Actions rapides</h1>
+    <p>Selectionnez une action pour continuer.</p>
+  </header>
+
+  <div class="menu-actions">
+    <button class="menu-btn" type="button" routerLink="/receipt/new">Nouveau recu</button>
+    <button class="menu-btn" type="button" routerLink="/donator/new">Nouveau donateur</button>
+    <button class="menu-btn" type="button">Rechercher un donateur</button>
+    <button class="menu-btn" type="button" routerLink="/receipt/search">Rechercher un recu</button>
+    <div class="menu-separator" aria-hidden="true"></div>
+    <button class="menu-btn menu-btn-logout" type="button" (click)="logout()">Deconnexion</button>
+  </div>
+</section>

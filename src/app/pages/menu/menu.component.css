@@ -1,0 +1,124 @@
+.menu {
+  flex: 1;
+  padding: 2rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.menu-header {
+  width: min(540px, 100%);
+  text-align: center;
+  animation: fade-in 500ms ease-out;
+}
+
+.menu-chip {
+  display: inline-flex;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(242, 165, 65, 0.22);
+  color: #8c5b1a;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.menu-header h1 {
+  font-size: 2.1rem;
+  margin-top: 0.75rem;
+}
+
+.menu-header p {
+  color: var(--ink-500);
+  margin-top: 0.4rem;
+}
+
+.menu-actions {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 1rem;
+  animation: rise-stagger 650ms ease-out;
+}
+
+.menu-btn {
+  height: 60px;
+  border-radius: 18px;
+  border: 1px solid rgba(16, 34, 38, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink-900);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 24px rgba(12, 40, 42, 0.08);
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.menu-btn:nth-child(1) {
+  background: linear-gradient(135deg, rgba(15, 124, 122, 0.2), rgba(15, 124, 122, 0.06));
+}
+
+.menu-btn:nth-child(2) {
+  background: linear-gradient(135deg, rgba(242, 165, 65, 0.25), rgba(242, 165, 65, 0.05));
+}
+
+.menu-btn:nth-child(3) {
+  background: linear-gradient(135deg, rgba(16, 34, 38, 0.12), rgba(255, 255, 255, 0.8));
+}
+
+.menu-btn:nth-child(4) {
+  background: linear-gradient(135deg, rgba(15, 124, 122, 0.15), rgba(242, 165, 65, 0.12));
+}
+
+.menu-separator {
+  height: 1px;
+  background: rgba(16, 34, 38, 0.12);
+  margin: 0.2rem 0 0.6rem;
+}
+
+.menu-btn-logout {
+  background: linear-gradient(135deg, rgba(177, 75, 75, 0.18), rgba(255, 255, 255, 0.92));
+  color: #8f3b3b;
+}
+
+.menu-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 6px 16px rgba(12, 40, 42, 0.1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .menu {
+    padding: 1.5rem 1.2rem 2rem;
+  }
+
+  .menu-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .menu-btn {
+    height: 56px;
+    font-size: 0.98rem;
+  }
+}

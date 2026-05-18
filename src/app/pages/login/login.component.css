@@ -1,0 +1,133 @@
+.login {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: var(--card);
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.75rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  animation: rise 600ms ease-out;
+}
+
+.login-header {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 124, 122, 0.12);
+  color: var(--teal-700);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.login-header h1 {
+  font-size: 2rem;
+  margin-top: 0.75rem;
+}
+
+.login-header p {
+  color: var(--ink-500);
+  margin-top: 0.35rem;
+  line-height: 1.4;
+}
+
+.login-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.field input {
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 34, 38, 0.12);
+  padding: 0 1rem;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 150ms ease, box-shadow 150ms ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--teal-600);
+  box-shadow: 0 0 0 3px rgba(15, 124, 122, 0.15);
+}
+
+.primary-btn {
+  height: 52px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--teal-600), #138f8c);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--ink-500);
+  font-size: 0.85rem;
+}
+
+.error-text {
+  margin: 0;
+  color: #b14b4b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.6rem 1.4rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.75rem;
+  }
+}

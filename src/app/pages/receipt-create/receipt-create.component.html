@@ -1,0 +1,106 @@
+<section class="receipt-form">
+  <header class="receipt-header">
+    <a class="back-link" routerLink="/menu">Retour</a>
+    <h1>Nouveau recu</h1>
+    <p>Selectionnez un donateur ou creez-en un nouveau.</p>
+  </header>
+
+  <form class="form-card" (ngSubmit)="submit()">
+    <div class="block">
+      <h2>Donateur</h2>
+      <label class="checkbox">
+        <input type="checkbox" name="useExisting" [(ngModel)]="useExistingDonator" (change)="onExistingToggle()" />
+        <span>Donateur existant</span>
+      </label>
+
+      <div class="select-row" *ngIf="useExistingDonator">
+        <label class="field">
+          <span>Selection du donateur</span>
+          <input
+            type="text"
+            name="donatorSearch"
+            placeholder="Nom ou societe"
+            list="donatorsList"
+            [(ngModel)]="filterText"
+            (change)="onDonatorLabelChange()"
+          />
+        </label>
+        <datalist id="donatorsList">
+          <option *ngFor="let donator of filteredDonators" [value]="donator.companyName || (donator.firstName + ' ' + donator.lastName)"></option>
+        </datalist>
+      </div>
+
+      <div class="form-grid" *ngIf="!useExistingDonator">
+        <label class="field">
+          <span>Nom</span>
+          <input type="text" name="lastName" placeholder="Nom" [(ngModel)]="donatorModel.lastName" />
+        </label>
+
+        <label class="field">
+          <span>Prenom</span>
+          <input type="text" name="firstName" placeholder="Prenom" [(ngModel)]="donatorModel.firstName" />
+        </label>
+
+        <div class="divider divider-full">OU</div>
+
+        <label class="field field-wide">
+          <span>Nom de societe</span>
+          <input type="text" name="companyName" placeholder="Societe" [(ngModel)]="donatorModel.companyName" />
+        </label>
+
+        <div class="section-separator"></div>
+
+        <label class="field field-wide">
+          <span>Adresse ligne 1</span>
+          <input type="text" name="address" placeholder="Adresse" [(ngModel)]="donatorModel.address" />
+        </label>
+
+        <label class="field">
+          <span>Ville</span>
+          <input type="text" name="city" placeholder="Ville" [(ngModel)]="donatorModel.city" />
+        </label>
+
+        <label class="field">
+          <span>Code postal</span>
+          <input type="text" name="postalCode" placeholder="Code postal" [(ngModel)]="donatorModel.postalCode" />
+        </label>
+
+        <label class="field">
+          <span>Pays</span>
+          <input type="text" name="country" placeholder="Pays" [(ngModel)]="donatorModel.country" />
+        </label>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Recu</h2>
+      <div class="form-grid">
+        <label class="field">
+          <span>Montant en chiffre</span>
+          <input type="text" name="amountInput" placeholder="0,00" inputmode="decimal" [(ngModel)]="receiptModel.amountInput" />
+        </label>
+
+        <label class="field field-wide">
+          <span>Montant en toutes lettres</span>
+          <input type="text" name="amountWords" [value]="amountWords" readonly />
+        </label>
+
+        <label class="field">
+          <span>Date du don</span>
+          <input type="date" name="donationDate" [(ngModel)]="receiptModel.donationDate" />
+        </label>
+
+        <label class="field">
+          <span>Methode de paiement</span>
+          <select name="paymentMethod" [(ngModel)]="receiptModel.paymentMethod">
+            <option *ngFor="let method of paymentMethods" [value]="method.value">{{ method.label }}</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="primary-btn" type="submit">Enregistrer le recu</button>
+    </div>
+  </form>
+</section>

@@ -1,0 +1,143 @@
+.donator-form {
+  flex: 1;
+  width: min(620px, 100%);
+  padding: 1.8rem 1.4rem 2.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.donator-header {
+  text-align: left;
+  animation: fade-in 450ms ease-out;
+}
+
+.back-link {
+  display: inline-flex;
+  color: var(--ink-500);
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.donator-header h1 {
+  font-size: 2rem;
+}
+
+.donator-header p {
+  color: var(--ink-500);
+  margin-top: 0.35rem;
+}
+
+.form-card {
+  background: var(--card);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.field input {
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 34, 38, 0.12);
+  padding: 0 0.9rem;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--teal-600);
+  box-shadow: 0 0 0 3px rgba(15, 124, 122, 0.15);
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.divider {
+  text-align: center;
+  font-weight: 600;
+  color: var(--sun-500);
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.section-separator {
+  height: 1px;
+  background: rgba(16, 34, 38, 0.12);
+  margin: 0.35rem 0 0.65rem;
+}
+
+.form-actions {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.helper {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 0.9rem;
+}
+
+.helper.error {
+  color: #b14b4b;
+  font-weight: 600;
+}
+
+.primary-btn {
+  height: 52px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--teal-600), #138f8c);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 520px) {
+  .donator-form {
+    padding: 1.4rem 1.1rem 2rem;
+  }
+
+  .donator-header h1 {
+    font-size: 1.75rem;
+  }
+}
