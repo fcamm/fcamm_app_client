@@ -4,10 +4,10 @@ import { MenuComponent } from './pages/menu/menu.component';
 import { DonatorCreateComponent } from './pages/donator-create/donator-create.component';
 import { ReceiptCreateComponent } from './pages/receipt-create/receipt-create.component';
 import { ReceiptSearchComponent } from './pages/receipt-search/receipt-search.component';
-import { authGuard, authMatchGuard, loginGuard } from './guards/auth.guard';
+import { authGuard, authMatchGuard, loginGuard, rootRedirectGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-	{ path: '', pathMatch: 'full', redirectTo: 'login' },
+	{ path: '', pathMatch: 'full', canMatch: [rootRedirectGuard], component: LoginComponent },
 	{ path: 'login', component: LoginComponent, canMatch: [loginGuard] },
 	{ path: 'menu', component: MenuComponent, canActivate: [authGuard], canMatch: [authMatchGuard] },
 	{ path: 'donator/new', component: DonatorCreateComponent, canActivate: [authGuard], canMatch: [authMatchGuard] },

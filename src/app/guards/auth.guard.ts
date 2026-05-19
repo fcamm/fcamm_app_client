@@ -50,6 +50,19 @@ export const loginGuard: CanMatchFn = () => {
     return true;
   }
 
-  // Allow the login route; the login component will redirect to returnUrl.
-  return true;
+  return router.createUrlTree(['/menu']);
+};
+
+export const rootRedirectGuard: CanMatchFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const platformId = inject(PLATFORM_ID);
+
+  if (!isPlatformBrowser(platformId)) {
+    return true;
+  }
+
+  return authService.isAuthenticated()
+    ? router.createUrlTree(['/menu'])
+    : router.createUrlTree(['/login']);
 };
