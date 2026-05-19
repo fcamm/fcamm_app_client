@@ -32,7 +32,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
         try {
           const healthUrl = new URL('/api/server-health', req.url).toString();
-          fetch(healthUrl, { credentials: 'include' })
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), 3000);
+
+          fetch(healthUrl, { credentials: 'include', signal: controller.signal })
             .then((response) => {
               if (!response.ok) {
                 serverStatus.setOffline(true);
@@ -40,6 +43,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             })
             .catch(() => {
               serverStatus.setOffline(true);
+            })
+            .finally(() => {
+              clearTimeout(timeoutId);
             });
         } catch {
           serverStatus.setOffline(true);
