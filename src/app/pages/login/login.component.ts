@@ -228,16 +228,23 @@ export class LoginComponent {
   }
 
   private async pingServer(): Promise<boolean> {
-    return firstValueFrom(
+    const startedAt = Date.now();
+
+    const result = await firstValueFrom(
       this.http
         .get(`${this.apiBaseUrl}/api/server-health`, { withCredentials: true })
         .pipe(
           timeout({ first: 5000 }),
-          catchError((error) => {
-            return of(false);
-          })
+          catchError(() => of(false))
         )
-    ).then((result) => Boolean(result));
+    );
+
+    const elapsed = Date.now() - startedAt;
+    if (elapsed > 3000) {
+      return false;
+    }
+
+    return Boolean(result);
   }
 
   private startWarmupTimer(): void {
