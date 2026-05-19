@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/com
 import { inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { catchError, tap, throwError } from 'rxjs';
+import { catchError, finalize, from, switchMap, tap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ServerStatusService } from '../services/server-status.service';
 
@@ -13,10 +13,40 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const serverStatus = inject(ServerStatusService);
   const token = authService.getToken();
 
+  const hasRetried = req.headers.has('x-fcamm-retry');
+  const isLoginCall = req.url.includes('/api/session') && req.method === 'POST';
+  const isHealthCheck = req.url.includes('/api/server-health');
   const authReq = req.clone({
     withCredentials: true,
     setHeaders: token ? { Authorization: token } : {}
   });
+
+  let slowRequestTimer: number | undefined;
+  let requestCompleted = false;
+
+  if (isPlatformBrowser(platformId)) {
+    slowRequestTimer = window.setTimeout(() => {
+      if (!requestCompleted) {
+        if (isLoginCall || isHealthCheck) {
+          return;
+        }
+        try {
+          const healthUrl = new URL('/api/server-health', req.url).toString();
+          fetch(healthUrl, { credentials: 'include' })
+            .then((response) => {
+              if (!response.ok) {
+                serverStatus.setOffline(true);
+              }
+            })
+            .catch(() => {
+              serverStatus.setOffline(true);
+            });
+        } catch {
+          serverStatus.setOffline(true);
+        }
+      }
+    }, 3000);
+  }
 
   return next(authReq).pipe(
     tap((event) => {
@@ -25,11 +55,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
     }),
     catchError((error: HttpErrorResponse) => {
-      const isLoginCall = req.url.includes('/api/session') && req.method === 'POST';
       const isNetworkError = error.status === 0 || error.status === 502 || error.status === 503 || error.status === 504;
 
-      if (isNetworkError && !isLoginCall) {
+      if (isNetworkError && !isLoginCall && !isHealthCheck) {
         serverStatus.setOffline(true);
+
+        if (!hasRetried) {
+          const retriedReq = authReq.clone({
+            setHeaders: { 'x-fcamm-retry': '1' }
+          });
+
+          return from(waitForServerOnline(req.url)).pipe(
+            switchMap(() => next(retriedReq))
+          );
+        }
+
         return throwError(() => error);
       }
 
@@ -47,6 +87,33 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
       return throwError(() => error);
+    }),
+    finalize(() => {
+      requestCompleted = true;
+      if (slowRequestTimer) {
+        clearTimeout(slowRequestTimer);
+      }
     })
   );
+};
+
+const waitForServerOnline = async (requestUrl: string): Promise<void> => {
+  const maxWaitMs = 90_000;
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < maxWaitMs) {
+    try {
+      const healthUrl = new URL('/api/server-health', requestUrl).toString();
+      const response = await fetch(healthUrl, { credentials: 'include' });
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      // Keep waiting until server is reachable.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+
+  throw new Error('SERVER_SLEEP');
 };

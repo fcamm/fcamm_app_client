@@ -119,6 +119,9 @@ export class LoginComponent {
       }
     } finally {
       this.isSubmitting = false;
+      if (this.isWarmingUp) {
+        this.stopWarmupTimer();
+      }
       this.cdr.detectChanges();
     }
   }
