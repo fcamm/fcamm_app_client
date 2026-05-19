@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node dist/fcamm_editor_front/server/server.mjs",
+    "start:dev": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:fcamm_app_client": "node dist/fcamm_app_client/server/server.mjs"
+    "serve:ssr": "node dist/fcamm_editor_front/server/server.mjs"
   },
   "private": true,
   "packageManager": "npm@9.6.5",
