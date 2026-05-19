@@ -16,6 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const hasRetried = req.headers.has('x-fcamm-retry');
   const isLoginCall = req.url.includes('/api/session') && req.method === 'POST';
   const isHealthCheck = req.url.includes('/api/server-health');
+  const isRetryable = req.method === 'GET' || req.method === 'HEAD';
   const authReq = req.clone({
     withCredentials: true,
     setHeaders: token ? { Authorization: token } : {}
@@ -27,6 +28,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (isPlatformBrowser(platformId)) {
     slowRequestTimer = window.setTimeout(() => {
       if (!requestCompleted) {
+        if (isLoginCall || isHealthCheck) {
+          return;
+        }
         try {
           const healthUrl = new URL('/api/server-health', req.url).toString();
           const controller = new AbortController();
@@ -55,6 +59,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     tap((event) => {
       if (event instanceof HttpResponse) {
         serverStatus.setOffline(false);
+        serverStatus.stopHealthPolling();
       }
     }),
     catchError((error: HttpErrorResponse) => {
@@ -63,7 +68,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (isNetworkError && !isLoginCall && !isHealthCheck) {
         serverStatus.setOffline(true);
 
-        if (!hasRetried) {
+        if (!hasRetried && isRetryable) {
           const retriedReq = authReq.clone({
             setHeaders: { 'x-fcamm-retry': '1' }
           });

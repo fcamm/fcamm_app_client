@@ -40,6 +40,9 @@ export class LoginComponent {
   warmupSeconds = 0;
   warmupProgress = 0;
   private warmupIntervalId?: number;
+  private submitTimeoutId?: number;
+  private keepWarmupVisible = false;
+  private wakeupPromise?: Promise<void>;
 
   constructor(
     private readonly http: HttpClient,
@@ -83,23 +86,28 @@ export class LoginComponent {
 
     this.errorMessage = '';
     this.isSubmitting = true;
+    this.armSlowRequestWarmup();
 
     try {
       const response = await this.doLogin();
+      this.keepWarmupVisible = false;
       this.authService.setToken(response.token);
       const returnUrl = this.getReturnUrl();
       await this.router.navigateByUrl(returnUrl);
     } catch (error) {
       const serverSleeping = await this.isServerSleeping();
       if (serverSleeping) {
+        this.keepWarmupVisible = true;
         try {
           await this.waitForServerWakeup();
           const retryResponse = await this.doLogin();
+          this.keepWarmupVisible = false;
           this.authService.setToken(retryResponse.token);
           const returnUrl = this.getReturnUrl();
           await this.router.navigateByUrl(returnUrl);
           return;
         } catch (retryError) {
+          this.keepWarmupVisible = false;
           if (retryError instanceof Error && retryError.message === 'SERVER_SLEEP') {
             this.errorMessage = 'Serveur en veille. Merci de patienter puis reessayer.';
           } else if (retryError instanceof HttpErrorResponse) {
@@ -110,19 +118,50 @@ export class LoginComponent {
           }
         }
       } else if (error instanceof HttpErrorResponse) {
+        this.keepWarmupVisible = false;
         const serverMessage = this.extractServerMessage(error);
         this.errorMessage = serverMessage || 'Identifiants invalides ou serveur indisponible.';
       } else if (error instanceof Error && error.message === 'SERVER_SLEEP') {
+        this.keepWarmupVisible = false;
         this.errorMessage = 'Serveur en veille. Merci de patienter puis reessayer.';
       } else {
+        this.keepWarmupVisible = false;
         this.errorMessage = 'Identifiants invalides ou serveur indisponible.';
       }
     } finally {
       this.isSubmitting = false;
-      if (this.isWarmingUp) {
+      this.clearSlowRequestWarmup();
+      if (this.isWarmingUp && !this.keepWarmupVisible) {
         this.stopWarmupTimer();
       }
       this.cdr.detectChanges();
+    }
+  }
+
+  private armSlowRequestWarmup(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (this.submitTimeoutId) {
+      clearTimeout(this.submitTimeoutId);
+    }
+
+    this.submitTimeoutId = window.setTimeout(() => {
+      this.ngZone.run(() => {
+        if (this.isSubmitting && !this.isWarmingUp) {
+          this.keepWarmupVisible = true;
+          this.startWarmupTimer();
+          this.cdr.detectChanges();
+        }
+      });
+    }, 3000);
+  }
+
+  private clearSlowRequestWarmup(): void {
+    if (this.submitTimeoutId) {
+      clearTimeout(this.submitTimeoutId);
+      this.submitTimeoutId = undefined;
     }
   }
 
@@ -199,35 +238,43 @@ export class LoginComponent {
   }
 
   private async waitForServerWakeup(): Promise<void> {
-    if (this.isWarmingUp) {
-      return;
+    if (this.wakeupPromise) {
+      return this.wakeupPromise;
     }
 
-    const startedAt = Date.now();
-    const maxWaitMs = 90_000;
-    let hasShownWarmup = false;
+    this.wakeupPromise = (async () => {
+      const startedAt = Date.now();
+      const maxWaitMs = 90_000;
+      let hasShownWarmup = false;
 
-    while (Date.now() - startedAt < maxWaitMs) {
-      const isAwake = await this.pingServer();
-      if (isAwake) {
-        if (hasShownWarmup) {
-          this.stopWarmupTimer();
+      while (Date.now() - startedAt < maxWaitMs) {
+        const isAwake = await this.pingServer();
+        if (isAwake) {
+          if (hasShownWarmup) {
+            this.stopWarmupTimer();
+          }
+          return;
         }
-        return;
+
+        if (!hasShownWarmup) {
+          this.startWarmupTimer();
+          hasShownWarmup = true;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
 
-      if (!hasShownWarmup) {
-        this.startWarmupTimer();
-        hasShownWarmup = true;
+      if (hasShownWarmup) {
+        this.stopWarmupTimer();
       }
+      throw new Error('SERVER_SLEEP');
+    })();
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      await this.wakeupPromise;
+    } finally {
+      this.wakeupPromise = undefined;
     }
-
-    if (hasShownWarmup) {
-      this.stopWarmupTimer();
-    }
-    throw new Error('SERVER_SLEEP');
   }
 
   private async pingServer(): Promise<boolean> {
