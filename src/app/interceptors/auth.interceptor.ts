@@ -27,9 +27,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (isPlatformBrowser(platformId)) {
     slowRequestTimer = window.setTimeout(() => {
       if (!requestCompleted) {
-        if (isLoginCall || isHealthCheck) {
-          return;
-        }
         try {
           const healthUrl = new URL('/api/server-health', req.url).toString();
           const controller = new AbortController();
