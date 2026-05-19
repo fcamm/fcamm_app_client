@@ -1,8 +1,8 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
@@ -45,11 +45,30 @@ export class LoginComponent {
     private readonly http: HttpClient,
     private readonly router: Router,
     private readonly authService: AuthService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly location: Location,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly ngZone: NgZone
   ) {
+    const queryReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (queryReturnUrl) {
+      if (!queryReturnUrl.startsWith('/login')) {
+        this.storeReturnUrl(queryReturnUrl);
+      }
+      this.router.navigate(['/login'], { replaceUrl: true });
+    }
+
     if (this.authService.isAuthenticated()) {
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+      const returnUrl = this.getReturnUrl();
       this.router.navigateByUrl(returnUrl);
+    }
+
+    if (this.consumeServerSleepFlag()) {
+      this.startWarmupTimer();
+      this.waitForServerWakeup().catch(() => {
+        this.errorMessage = 'Serveur en veille. Merci de patienter puis reessayer.';
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -66,29 +85,114 @@ export class LoginComponent {
     this.isSubmitting = true;
 
     try {
-      await this.waitForServerWakeup();
-      const response = await firstValueFrom(
-        this.http.post<SessionResponse>(
-          `${this.apiBaseUrl}/api/session`,
-          {
-            userName: this.model.userName,
-            password: this.model.password
-          },
-          { withCredentials: true }
-        )
-      );
+      const response = await this.doLogin();
       this.authService.setToken(response.token);
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+      const returnUrl = this.getReturnUrl();
       await this.router.navigateByUrl(returnUrl);
     } catch (error) {
-      if (error instanceof Error && error.message === 'SERVER_SLEEP') {
+      const serverSleeping = await this.isServerSleeping();
+      if (serverSleeping) {
+        try {
+          await this.waitForServerWakeup();
+          const retryResponse = await this.doLogin();
+          this.authService.setToken(retryResponse.token);
+          const returnUrl = this.getReturnUrl();
+          await this.router.navigateByUrl(returnUrl);
+          return;
+        } catch (retryError) {
+          if (retryError instanceof Error && retryError.message === 'SERVER_SLEEP') {
+            this.errorMessage = 'Serveur en veille. Merci de patienter puis reessayer.';
+          } else if (retryError instanceof HttpErrorResponse) {
+            const serverMessage = this.extractServerMessage(retryError);
+            this.errorMessage = serverMessage || 'Identifiants invalides ou serveur indisponible.';
+          } else {
+            this.errorMessage = 'Identifiants invalides ou serveur indisponible.';
+          }
+        }
+      } else if (error instanceof HttpErrorResponse) {
+        const serverMessage = this.extractServerMessage(error);
+        this.errorMessage = serverMessage || 'Identifiants invalides ou serveur indisponible.';
+      } else if (error instanceof Error && error.message === 'SERVER_SLEEP') {
         this.errorMessage = 'Serveur en veille. Merci de patienter puis reessayer.';
       } else {
         this.errorMessage = 'Identifiants invalides ou serveur indisponible.';
       }
     } finally {
       this.isSubmitting = false;
+      this.cdr.detectChanges();
     }
+  }
+
+  private async doLogin(): Promise<SessionResponse> {
+    return firstValueFrom(
+      this.http.post<SessionResponse>(
+        `${this.apiBaseUrl}/api/session`,
+        {
+          userName: this.model.userName,
+          password: this.model.password
+        },
+        { withCredentials: true }
+      )
+    );
+  }
+
+  private async isServerSleeping(): Promise<boolean> {
+    return !(await this.pingServer());
+  }
+
+  private getReturnUrl(): string {
+    const queryReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (queryReturnUrl && !queryReturnUrl.startsWith('/login')) {
+      return queryReturnUrl;
+    }
+
+    if (typeof window !== 'undefined') {
+      const storedReturnUrl = sessionStorage.getItem('fcamm_return_url');
+      if (storedReturnUrl) {
+        sessionStorage.removeItem('fcamm_return_url');
+        return storedReturnUrl;
+      }
+    }
+
+    return '/menu';
+  }
+
+  private storeReturnUrl(returnUrl: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('fcamm_return_url', returnUrl);
+    } catch {
+      // Ignore storage failures (private mode, quota, etc.).
+    }
+  }
+
+  private consumeServerSleepFlag(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const flag = sessionStorage.getItem('fcamm_server_sleep');
+    if (flag) {
+      sessionStorage.removeItem('fcamm_server_sleep');
+      return true;
+    }
+
+    return false;
+  }
+
+  private extractServerMessage(error: HttpErrorResponse): string | null {
+    if (typeof error.error === 'string' && error.error.trim().length > 0) {
+      return error.error;
+    }
+
+    if (error.error && typeof error.error.message === 'string') {
+      return error.error.message;
+    }
+
+    return null;
   }
 
   private async waitForServerWakeup(): Promise<void> {
@@ -96,21 +200,30 @@ export class LoginComponent {
       return;
     }
 
-    this.startWarmupTimer();
     const startedAt = Date.now();
     const maxWaitMs = 90_000;
+    let hasShownWarmup = false;
 
     while (Date.now() - startedAt < maxWaitMs) {
       const isAwake = await this.pingServer();
       if (isAwake) {
-        this.stopWarmupTimer();
+        if (hasShownWarmup) {
+          this.stopWarmupTimer();
+        }
         return;
+      }
+
+      if (!hasShownWarmup) {
+        this.startWarmupTimer();
+        hasShownWarmup = true;
       }
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
-    this.stopWarmupTimer();
+    if (hasShownWarmup) {
+      this.stopWarmupTimer();
+    }
     throw new Error('SERVER_SLEEP');
   }
 
@@ -138,11 +251,14 @@ export class LoginComponent {
 
     const startedAt = Date.now();
     this.warmupIntervalId = window.setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
-      this.warmupSeconds = elapsed;
+      this.ngZone.run(() => {
+        const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+        this.warmupSeconds = elapsed;
 
-      const progress = Math.min(90, 5 + Math.floor((elapsed / 90) * 85));
-      this.warmupProgress = Math.max(this.warmupProgress, progress);
+        const progress = Math.min(90, 5 + Math.floor((elapsed / 90) * 85));
+        this.warmupProgress = Math.max(this.warmupProgress, progress);
+        this.cdr.detectChanges();
+      });
     }, 1000);
   }
 
@@ -154,8 +270,11 @@ export class LoginComponent {
 
     this.warmupProgress = 100;
     setTimeout(() => {
-      this.isWarmingUp = false;
-      this.warmupProgress = 0;
+      this.ngZone.run(() => {
+        this.isWarmingUp = false;
+        this.warmupProgress = 0;
+        this.cdr.detectChanges();
+      });
     }, 600);
   }
 }

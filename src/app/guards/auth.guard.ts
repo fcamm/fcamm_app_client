@@ -12,9 +12,12 @@ export const authGuard: CanActivateFn = (_route, state) => {
     return true;
   }
 
-  return authService.isAuthenticated()
-    ? true
-    : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+
+  setReturnUrl(state.url);
+  return router.createUrlTree(['/login']);
 };
 
 export const authMatchGuard: CanMatchFn = (_route, segments) => {
@@ -34,7 +37,8 @@ export const authMatchGuard: CanMatchFn = (_route, segments) => {
     ? `/${segments.map((segment) => segment.path).join('/')}`
     : '/';
 
-  return router.createUrlTree(['/login'], { queryParams: { returnUrl } });
+  setReturnUrl(returnUrl);
+  return router.createUrlTree(['/login']);
 };
 
 export const loginGuard: CanMatchFn = () => {
@@ -65,4 +69,18 @@ export const rootRedirectGuard: CanMatchFn = () => {
   return authService.isAuthenticated()
     ? router.createUrlTree(['/menu'])
     : router.createUrlTree(['/login']);
+};
+
+const RETURN_URL_KEY = 'fcamm_return_url';
+
+const setReturnUrl = (returnUrl: string): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(RETURN_URL_KEY, returnUrl);
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.).
+  }
 };

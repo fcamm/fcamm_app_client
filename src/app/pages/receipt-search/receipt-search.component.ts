@@ -83,6 +83,7 @@ export class ReceiptSearchComponent {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.isLoading = true;
     await this.loadDonators();
     await this.loadReceipts();
   }
@@ -184,6 +185,7 @@ export class ReceiptSearchComponent {
   }
 
   private async loadReceipts(): Promise<void> {
+    const startedAt = Date.now();
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -230,6 +232,12 @@ export class ReceiptSearchComponent {
     } catch (error) {
       this.errorMessage = "Impossible de charger les recus.";
     } finally {
+      const elapsed = Date.now() - startedAt;
+      const minDisplayMs = 400;
+      if (elapsed < minDisplayMs) {
+        await new Promise((resolve) => setTimeout(resolve, minDisplayMs - elapsed));
+      }
+
       this.isLoading = false;
       this.cdr.detectChanges();
     }

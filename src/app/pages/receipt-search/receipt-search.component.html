@@ -23,7 +23,10 @@
     </div>
 
     <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
-    <p class="loading-text" *ngIf="isLoading">Chargement des recus...</p>
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p class="loading-text">Recherche en cours...</p>
+    </div>
 
     <button class="filters-toggle" type="button" (click)="toggleFilters()">
       <span class="burger" aria-hidden="true"></span>
@@ -65,7 +68,7 @@
     </div>
   </div>
 
-  <div class="list-card">
+  <div class="list-card" *ngIf="!isLoading">
     <div class="list-header">
       <span>Date</span>
       <span>Donateur</span>

@@ -7,7 +7,10 @@ import { ToastService } from '../services/toast.service';
 export const messageInterceptor: HttpInterceptorFn = (req, next) => {
   const toastService = inject(ToastService);
   const platformId = inject(PLATFORM_ID);
-  const suppressToast = req.url.includes('/api/list/donator');
+  const suppressToast =
+    req.url.includes('/api/list/donator') ||
+    req.url.includes('/api/server-health') ||
+    req.url.includes('/api/session');
 
   return next(req).pipe(
     tap((event) => {

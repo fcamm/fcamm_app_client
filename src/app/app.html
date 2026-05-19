@@ -3,4 +3,14 @@
     <router-outlet></router-outlet>
   </div>
   <app-toast></app-toast>
+  <div class="server-overlay" *ngIf="serverStatus.isOffline() && !isLoginRoute">
+    <div class="server-overlay__card">
+      <div class="server-overlay__spinner" aria-hidden="true"></div>
+      <h2>En attente du serveur</h2>
+      <p>Le serveur est en veille. Merci de patienter quelques instants.</p>
+      <div class="server-overlay__bar">
+        <span></span>
+      </div>
+    </div>
+  </div>
 </main>
