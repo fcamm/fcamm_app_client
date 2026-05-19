@@ -31,9 +31,15 @@
       </label>
 
       <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <div class="warmup" *ngIf="isWarmingUp">
+        <p>Reveil du serveur... {{ warmupSeconds }}s</p>
+        <div class="progress">
+          <span [style.width.%]="warmupProgress"></span>
+        </div>
+      </div>
 
-      <button class="primary-btn" type="submit" [disabled]="!canSubmit || isSubmitting">
-        {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+      <button class="primary-btn" type="submit" [disabled]="!canSubmit || isSubmitting || isWarmingUp">
+        {{ isSubmitting ? 'Connexion...' : (isWarmingUp ? 'Reveil...' : 'Se connecter') }}
       </button>
     </form>
 
