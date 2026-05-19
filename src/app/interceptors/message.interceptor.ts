@@ -9,8 +9,7 @@ export const messageInterceptor: HttpInterceptorFn = (req, next) => {
   const platformId = inject(PLATFORM_ID);
   const suppressToast =
     req.url.includes('/api/list/donator') ||
-    req.url.includes('/api/server-health') ||
-    req.url.includes('/api/session');
+    req.url.includes('/api/server-health');
 
   return next(req).pipe(
     tap((event) => {
