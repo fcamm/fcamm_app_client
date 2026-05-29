@@ -3,12 +3,12 @@
     <div class="login-header">
       <div class="brand-mark">FCAMM EDITOR APP</div>
       <h1>Connexion</h1>
-      <p>Acces rapide pour les operations de recu et donateur.</p>
+      <p>Accès rapide et simplifié pour les operations sur les reçus et attestations diverses.</p>
     </div>
 
     <form class="login-form" autocomplete="on" (ngSubmit)="submit()">
       <label class="field">
-        <span>Identifiant</span>
+        <span>Identifiant <span class="required-indicator">*</span></span>
         <input
           type="text"
           name="username"
@@ -16,18 +16,28 @@
           inputmode="email"
           autocomplete="username"
           [(ngModel)]="model.userName"
+          required
+          #usernameModel="ngModel"
         />
+        <p class="field-error" *ngIf="submitAttempted && usernameModel.invalid">
+          Identifiant obligatoire.
+        </p>
       </label>
 
       <label class="field">
-        <span>Mot de passe</span>
+        <span>Mot de passe <span class="required-indicator">*</span></span>
         <input
           type="password"
           name="password"
           placeholder="Votre mot de passe"
           autocomplete="current-password"
           [(ngModel)]="model.password"
+          required
+          #passwordModel="ngModel"
         />
+        <p class="field-error" *ngIf="submitAttempted && passwordModel.invalid">
+          Mot de passe obligatoire.
+        </p>
       </label>
 
       <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
@@ -38,7 +48,12 @@
         </div>
       </div>
 
-      <button class="primary-btn" type="submit" [disabled]="!canSubmit || isSubmitting || isWarmingUp">
+      <button
+        class="primary-btn"
+        type="submit"
+        [disabled]="isSubmitting || isWarmingUp"
+        [class.is-disabled]="!canSubmit"
+      >
         {{ isSubmitting ? 'Connexion...' : (isWarmingUp ? 'Reveil...' : 'Se connecter') }}
       </button>
     </form>

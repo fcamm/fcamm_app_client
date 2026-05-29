@@ -84,6 +84,28 @@
   background: #fff;
 }
 
+.amount-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.amount-input input {
+  width: 100%;
+}
+
+.amount-suffix {
+  padding: 0 0.75rem;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(16, 34, 38, 0.08);
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
 .field input:focus,
 .field select:focus {
   outline: none;
@@ -116,6 +138,28 @@
 
 .form-actions {
   margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.error-text {
+  margin: 0 0 0.6rem;
+  color: #b14b4b;
+  font-weight: 600;
+}
+
+.field-error {
+  margin: 0.35rem 0 0;
+  color: #b14b4b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.required-indicator {
+  color: #b14b4b;
+  font-weight: 700;
+  margin-left: 0.2rem;
 }
 
 .primary-btn {
@@ -128,6 +172,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.primary-btn.is-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .primary-btn:active {

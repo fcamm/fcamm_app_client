@@ -37,6 +37,7 @@ export class LoginComponent {
   errorMessage = '';
   isSubmitting = false;
   isWarmingUp = false;
+  submitAttempted = false;
   warmupSeconds = 0;
   warmupProgress = 0;
   private warmupIntervalId?: number;
@@ -80,6 +81,7 @@ export class LoginComponent {
   }
 
   async submit(): Promise<void> {
+    this.submitAttempted = true;
     if (!this.canSubmit || this.isSubmitting) {
       return;
     }
@@ -94,6 +96,7 @@ export class LoginComponent {
       this.authService.setToken(response.token);
       const returnUrl = this.getReturnUrl();
       await this.router.navigateByUrl(returnUrl);
+      this.submitAttempted = false;
     } catch (error) {
       const serverSleeping = await this.isServerSleeping();
       if (serverSleeping) {

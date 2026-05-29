@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 interface DonatorOption {
   id: string;
@@ -14,6 +17,24 @@ interface DonatorOption {
   country: string;
 }
 
+interface DonatorListResponse {
+  donators?: DonatorOption[];
+}
+
+interface CreateDonatorResponse {
+  donator?: {
+    _id?: string;
+  };
+}
+
+interface ReceiptCreateResponse {
+  receipt?: {
+    _id?: string;
+    receiptNumber?: string;
+    pdfID?: string;
+  };
+}
+
 @Component({
   selector: 'app-receipt-create',
   standalone: true,
@@ -21,33 +42,17 @@ interface DonatorOption {
   templateUrl: './receipt-create.component.html',
   styleUrl: './receipt-create.component.css'
 })
-export class ReceiptCreateComponent {
+export class ReceiptCreateComponent implements OnInit {
+  private readonly apiBaseUrl = environment.apiBaseUrl;
   useExistingDonator = true;
   filterText = '';
   selectedDonatorId = '';
+  isLoadingDonators = false;
+  isSubmitting = false;
+  submitAttempted = false;
+  errorMessage = '';
 
-  donators: DonatorOption[] = [
-    {
-      id: '1',
-      firstName: 'Karim',
-      lastName: 'Benali',
-      companyName: '',
-      address: '12 Rue des Orangers',
-      city: 'Montreuil',
-      postalCode: '93100',
-      country: 'France'
-    },
-    {
-      id: '2',
-      firstName: '',
-      lastName: '',
-      companyName: 'SAS Atlas',
-      address: '5 Avenue de Paris',
-      city: 'Montreuil',
-      postalCode: '93100',
-      country: 'France'
-    }
-  ];
+  donators: DonatorOption[] = [];
 
   donatorModel = {
     lastName: '',
@@ -56,20 +61,20 @@ export class ReceiptCreateComponent {
     address: '',
     city: '',
     postalCode: '',
-    country: ''
+    country: 'France'
   };
 
   receiptModel = {
     amountInput: '',
     donationDate: '',
-    paymentMethod: 'espece'
+    paymentMethod: ''
   };
 
   paymentMethods = [
-    { value: 'espece', label: 'Espece' },
-    { value: 'cheque', label: 'Cheque' },
-    { value: 'virement', label: 'Virement' },
-    { value: 'carte', label: 'Carte' }
+    { label: 'Chèque', value: 'CHEQUE' },
+    { label: 'Espèce', value: 'ESPECE' },
+    { label: 'Carte bancaire', value: 'CARTE' },
+    { label: 'Virement bancaire', value: 'VIREMENT' }
   ];
 
   get filteredDonators(): DonatorOption[] {
@@ -84,8 +89,22 @@ export class ReceiptCreateComponent {
     });
   }
 
+  get canSubmit(): boolean {
+    if (this.isSubmitting || this.isLoadingDonators) {
+      return false;
+    }
+
+    return this.getValidationMessage().length === 0;
+  }
+
+  constructor(private readonly http: HttpClient) {}
+
+  async ngOnInit(): Promise<void> {
+    await this.loadDonators();
+  }
+
   get amountWords(): string {
-    const amount = Number(this.receiptModel.amountInput.replace(',', '.'));
+    const amount = this.parseAmount(this.receiptModel.amountInput);
     if (!Number.isFinite(amount)) {
       return '';
     }
@@ -140,7 +159,7 @@ export class ReceiptCreateComponent {
       address: '',
       city: '',
       postalCode: '',
-      country: ''
+      country: 'France'
     };
   }
 
@@ -153,9 +172,69 @@ export class ReceiptCreateComponent {
     this.onDonatorSelect();
   }
 
-  submit(): void {
-    // TODO: brancher la creation de recu + donateur.
-    alert('Recu pret a etre enregistre.');
+  async submit(): Promise<void> {
+    if (this.isSubmitting) {
+      return;
+    }
+
+    this.submitAttempted = true;
+    this.errorMessage = this.getValidationMessage();
+    if (this.errorMessage) {
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    try {
+      const donatorId = this.useExistingDonator
+        ? this.selectedDonatorId
+        : await this.createDonator();
+
+      if (!donatorId) {
+        this.errorMessage = 'Impossible de determiner le donateur.';
+        return;
+      }
+
+      const receiptResponse = await firstValueFrom(
+        this.http.post<ReceiptCreateResponse>(
+          `${this.apiBaseUrl}/api/receipt`,
+          {
+            donatorID: donatorId,
+            amount: this.parseAmount(this.receiptModel.amountInput),
+            donationDate: this.receiptModel.donationDate,
+            paymentMethod: this.receiptModel.paymentMethod
+          },
+          { withCredentials: true }
+        )
+      );
+
+      const pdfId = receiptResponse?.receipt?.pdfID;
+      const receiptNumber = receiptResponse?.receipt?.receiptNumber;
+      if (pdfId) {
+        await this.downloadReceiptPdf(pdfId, receiptNumber);
+      }
+
+      await this.loadDonators();
+      this.resetReceiptForm();
+      this.submitAttempted = false;
+      if (this.useExistingDonator) {
+        this.filterText = '';
+        this.selectedDonatorId = '';
+      } else {
+        this.clearDonatorForm();
+      }
+    } catch (error) {
+      this.errorMessage = this.getErrorMessage(error);
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  onPostalCodeInput(value: string): void {
+    const digitsOnly = value.replace(/\D/g, '');
+    if (digitsOnly !== this.donatorModel.postalCode) {
+      this.donatorModel.postalCode = digitsOnly;
+    }
   }
 
   private getDonatorLabel(donator: DonatorOption): string {
@@ -164,6 +243,213 @@ export class ReceiptCreateComponent {
     }
 
     return `${donator.firstName} ${donator.lastName}`.trim();
+  }
+
+  private async downloadReceiptPdf(pdfId: string, receiptNumber?: string): Promise<void> {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get(`${this.apiBaseUrl}/api/pdf/${pdfId}`, {
+          responseType: 'arraybuffer',
+          observe: 'response',
+          withCredentials: true
+        })
+      );
+
+      const contentType = response.headers.get('content-type') || '';
+      let blob: Blob | null = null;
+
+      if (contentType.includes('application/pdf')) {
+        blob = new Blob([response.body || new ArrayBuffer(0)], { type: 'application/pdf' });
+      } else {
+        blob = this.parsePdfFromJson(response.body);
+      }
+
+      if (!blob) {
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = receiptNumber ? `${receiptNumber}.pdf` : `recu-${pdfId}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Ignore download failures; receipt is still created.
+    }
+  }
+
+  private async loadDonators(): Promise<void> {
+    this.isLoadingDonators = true;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<DonatorListResponse>(`${this.apiBaseUrl}/api/list/donator`, {
+          withCredentials: true
+        })
+      );
+
+      const donators = response?.donators ?? [];
+      this.donators = donators.map((donator) => ({
+        ...donator,
+        id: (donator as { _id?: string })._id || donator.id
+      }));
+    } catch {
+      this.donators = [];
+    } finally {
+      this.isLoadingDonators = false;
+    }
+  }
+
+  private async createDonator(): Promise<string> {
+    const payload = this.buildDonatorPayload();
+    const response = await firstValueFrom(
+      this.http.post<CreateDonatorResponse>(`${this.apiBaseUrl}/api/donator`, payload, {
+        withCredentials: true
+      })
+    );
+
+    return response?.donator?._id || '';
+  }
+
+  private buildDonatorPayload(): Record<string, string> {
+    const payload: Record<string, string> = {};
+    const assignIfValue = (key: string, value: string) => {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        payload[key] = trimmed;
+      }
+    };
+
+    assignIfValue('firstName', this.donatorModel.firstName);
+    assignIfValue('lastName', this.donatorModel.lastName);
+    assignIfValue('companyName', this.donatorModel.companyName);
+    assignIfValue('address', this.donatorModel.address);
+    assignIfValue('city', this.donatorModel.city);
+    assignIfValue('postalCode', this.donatorModel.postalCode);
+    assignIfValue('country', this.donatorModel.country);
+
+    return payload;
+  }
+
+  private parseAmount(input: string | number): number {
+    const raw = typeof input === 'number' ? String(input) : input;
+    const normalized = raw.replace(',', '.').trim();
+    const amount = Number(normalized);
+    return Number.isFinite(amount) ? amount : 0;
+  }
+
+  private parsePdfFromJson(buffer: ArrayBuffer | null): Blob | null {
+    if (!buffer) {
+      return null;
+    }
+
+    try {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      const payload = JSON.parse(text) as { pdf?: { pdfFile?: string } };
+      const base64 = payload?.pdf?.pdfFile;
+      if (!base64) {
+        return null;
+      }
+      return this.decodeBase64ToBlob(base64);
+    } catch {
+      return null;
+    }
+  }
+
+  private decodeBase64ToBlob(base64: string): Blob | null {
+    const raw = base64.includes(',') ? base64.split(',')[1] : base64;
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const binary = atob(raw);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new Blob([bytes], { type: 'application/pdf' });
+    } catch {
+      return null;
+    }
+  }
+
+  private resetReceiptForm(): void {
+    this.receiptModel = {
+      amountInput: '',
+      donationDate: '',
+      paymentMethod: ''
+    };
+  }
+
+  private getValidationMessage(): string {
+    if (this.useExistingDonator) {
+      if (!this.selectedDonatorId) {
+        return 'Veuillez selectionner un donateur.';
+      }
+    } else {
+      const hasCompany = this.donatorModel.companyName.trim().length > 0;
+      const hasPerson =
+        this.donatorModel.firstName.trim().length > 0 || this.donatorModel.lastName.trim().length > 0;
+
+      if (hasCompany && hasPerson) {
+        return "Choisissez entre un nom d'entreprise ou un nom et prenom.";
+      }
+
+      if (!hasCompany) {
+        if (!this.donatorModel.firstName.trim() || !this.donatorModel.lastName.trim()) {
+          return 'Nom et prenom requis si aucune societe.';
+        }
+      }
+
+      if (this.donatorModel.address.trim()) {
+        if (
+          !this.donatorModel.city.trim() ||
+          !this.donatorModel.postalCode.trim() ||
+          !this.donatorModel.country.trim()
+        ) {
+          return "L'adresse est incomplete (ville, code postal, pays).";
+        }
+      }
+
+      const postalCode = this.donatorModel.postalCode.trim();
+      if (postalCode && !/^\d+$/.test(postalCode)) {
+        return 'Le code postal doit contenir uniquement des chiffres.';
+      }
+
+      if (postalCode && postalCode.length < 5) {
+        return 'Le code postal doit contenir au moins 5 chiffres.';
+      }
+    }
+
+    const amount = this.parseAmount(this.receiptModel.amountInput);
+    if (!amount || amount <= 0) {
+      return 'Veuillez saisir un montant valide.';
+    }
+
+    if (!this.receiptModel.donationDate) {
+      return 'Veuillez choisir la date du don.';
+    }
+
+    if (!this.receiptModel.paymentMethod) {
+      return 'Veuillez choisir le mode de paiement.';
+    }
+
+    return '';
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+      const message = (error as { error?: { message?: string } }).error?.message;
+      if (message) {
+        return message;
+      }
+    }
+    return 'Impossible de creer le recu.';
   }
 
   private formatAmountToWords(amount: number): string {

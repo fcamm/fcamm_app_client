@@ -32,24 +32,27 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return;
         }
         try {
-          const healthUrl = new URL('/api/server-health', req.url).toString();
+          const healthUrl = buildHealthUrl(req.url);
           const controller = new AbortController();
           const timeoutId = window.setTimeout(() => controller.abort(), 3000);
 
-          fetch(healthUrl, { credentials: 'include', signal: controller.signal })
+          fetch(healthUrl, { credentials: 'include', cache: 'no-store', signal: controller.signal })
             .then((response) => {
-              if (!response.ok) {
+              if (!response.ok && response.status !== 304) {
                 serverStatus.setOffline(true);
+                serverStatus.startHealthPolling(req.url);
               }
             })
             .catch(() => {
               serverStatus.setOffline(true);
+              serverStatus.startHealthPolling(req.url);
             })
             .finally(() => {
               clearTimeout(timeoutId);
             });
         } catch {
           serverStatus.setOffline(true);
+          serverStatus.startHealthPolling(req.url);
         }
       }
     }, 3000);
@@ -67,6 +70,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (isNetworkError && !isLoginCall && !isHealthCheck) {
         serverStatus.setOffline(true);
+        serverStatus.startHealthPolling(req.url);
+
+        if (!isPlatformBrowser(platformId)) {
+          return throwError(() => error);
+        }
 
         if (!hasRetried && isRetryable) {
           const retriedReq = authReq.clone({
@@ -111,9 +119,9 @@ const waitForServerOnline = async (requestUrl: string): Promise<void> => {
 
   while (Date.now() - startedAt < maxWaitMs) {
     try {
-      const healthUrl = new URL('/api/server-health', requestUrl).toString();
-      const response = await fetch(healthUrl, { credentials: 'include' });
-      if (response.ok) {
+      const healthUrl = buildHealthUrl(requestUrl);
+      const response = await fetch(healthUrl, { credentials: 'include', cache: 'no-store' });
+      if (response.ok || response.status === 304) {
         return;
       }
     } catch {
@@ -124,4 +132,10 @@ const waitForServerOnline = async (requestUrl: string): Promise<void> => {
   }
 
   throw new Error('SERVER_SLEEP');
+};
+
+const buildHealthUrl = (requestUrl: string): string => {
+  const healthUrl = new URL('/api/server-health', requestUrl);
+  healthUrl.searchParams.set('t', Date.now().toString());
+  return healthUrl.toString();
 };

@@ -1,8 +1,8 @@
 <section class="receipt-form">
   <header class="receipt-header">
     <a class="back-link" routerLink="/menu">Retour</a>
-    <h1>Nouveau recu</h1>
-    <p>Selectionnez un donateur ou creez-en un nouveau.</p>
+    <h1>Nouveau reçu</h1>
+    <p>Sélectionnez un donateur ou créez-en un nouveau.</p>
   </header>
 
   <form class="form-card" (ngSubmit)="submit()">
@@ -15,19 +15,24 @@
 
       <div class="select-row" *ngIf="useExistingDonator">
         <label class="field">
-          <span>Selection du donateur</span>
+          <span>Sélection du donateur <span class="required-indicator">*</span></span>
           <input
             type="text"
             name="donatorSearch"
-            placeholder="Nom ou societe"
+            placeholder="Nom ou société"
             list="donatorsList"
             [(ngModel)]="filterText"
             (change)="onDonatorLabelChange()"
+            [disabled]="isLoadingDonators"
           />
         </label>
         <datalist id="donatorsList">
           <option *ngFor="let donator of filteredDonators" [value]="donator.companyName || (donator.firstName + ' ' + donator.lastName)"></option>
         </datalist>
+        <p class="helper" *ngIf="isLoadingDonators">Chargement des donateurs...</p>
+        <p class="field-error" *ngIf="submitAttempted && !selectedDonatorId">
+          Veuillez selectionner un donateur.
+        </p>
       </div>
 
       <div class="form-grid" *ngIf="!useExistingDonator">
@@ -44,8 +49,8 @@
         <div class="divider divider-full">OU</div>
 
         <label class="field field-wide">
-          <span>Nom de societe</span>
-          <input type="text" name="companyName" placeholder="Societe" [(ngModel)]="donatorModel.companyName" />
+          <span>Nom de société</span>
+          <input type="text" name="companyName" placeholder="Société" [(ngModel)]="donatorModel.companyName" />
         </label>
 
         <div class="section-separator"></div>
@@ -62,22 +67,47 @@
 
         <label class="field">
           <span>Code postal</span>
-          <input type="text" name="postalCode" placeholder="Code postal" [(ngModel)]="donatorModel.postalCode" />
+          <input
+            type="text"
+            name="postalCode"
+            placeholder="Code postal"
+            inputmode="numeric"
+            pattern="\d+"
+            minlength="5"
+            maxlength="10"
+            [(ngModel)]="donatorModel.postalCode"
+            (input)="onPostalCodeInput($event.target.value)"
+          />
         </label>
 
         <label class="field">
           <span>Pays</span>
-          <input type="text" name="country" placeholder="Pays" [(ngModel)]="donatorModel.country" />
+          <input type="text" name="country" placeholder="Pays" [(ngModel)]="donatorModel.country" disabled />
         </label>
       </div>
     </div>
 
     <div class="block">
-      <h2>Recu</h2>
+      <h2>Reçu</h2>
       <div class="form-grid">
         <label class="field">
-          <span>Montant en chiffre</span>
-          <input type="text" name="amountInput" placeholder="0,00" inputmode="decimal" [(ngModel)]="receiptModel.amountInput" />
+          <span>Montant en chiffre <span class="required-indicator">*</span></span>
+          <div class="amount-input">
+            <input
+              type="number"
+              name="amountInput"
+              placeholder="0,00"
+              min="0.01"
+              step="0.01"
+              required
+              [(ngModel)]="receiptModel.amountInput"
+              #amountModel="ngModel"
+            />
+            <span class="amount-suffix">€</span>
+          </div>
+          <p class="field-error" *ngIf="submitAttempted && amountModel.invalid">
+            Montant obligatoire.
+          </p>
         </label>
 
         <label class="field field-wide">
@@ -86,21 +116,47 @@
         </label>
 
         <label class="field">
-          <span>Date du don</span>
-          <input type="date" name="donationDate" [(ngModel)]="receiptModel.donationDate" />
+          <span>Date du don <span class="required-indicator">*</span></span>
+          <input
+            type="date"
+            name="donationDate"
+            [(ngModel)]="receiptModel.donationDate"
+            required
+            #donationDateModel="ngModel"
+          />
+          <p class="field-error" *ngIf="submitAttempted && donationDateModel.invalid">
+            Date obligatoire.
+          </p>
         </label>
 
         <label class="field">
-          <span>Methode de paiement</span>
-          <select name="paymentMethod" [(ngModel)]="receiptModel.paymentMethod">
+          <span>Méthode de paiement <span class="required-indicator">*</span></span>
+          <select
+            name="paymentMethod"
+            [(ngModel)]="receiptModel.paymentMethod"
+            required
+            #paymentMethodModel="ngModel"
+          >
+            <option value="" disabled>Choisir un mode</option>
             <option *ngFor="let method of paymentMethods" [value]="method.value">{{ method.label }}</option>
           </select>
+          <p class="field-error" *ngIf="submitAttempted && paymentMethodModel.invalid">
+            Mode de paiement obligatoire.
+          </p>
         </label>
       </div>
     </div>
 
     <div class="form-actions">
-      <button class="primary-btn" type="submit">Enregistrer le recu</button>
+      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <button
+        class="primary-btn"
+        type="submit"
+        [disabled]="isSubmitting || isLoadingDonators"
+        [class.is-disabled]="!canSubmit"
+      >
+        {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer le reçu' }}
+      </button>
     </div>
   </form>
 </section>

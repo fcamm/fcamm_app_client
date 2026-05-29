@@ -44,7 +44,7 @@ interface DonatorApiResponse {
 })
 export class ReceiptSearchComponent {
   private readonly apiBaseUrl = environment.apiBaseUrl;
-  private searchDebounceId: ReturnType<typeof setTimeout> | null = null;
+  private allReceipts: ReceiptRow[] = [];
   private donatorMap = new Map<string, string>();
 
   searchText = '';
@@ -96,17 +96,16 @@ export class ReceiptSearchComponent {
     return this.receipts.length;
   }
 
+  get totalAmount(): number {
+    return this.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+  }
+
   onSearchChange(): void {
-    if (this.searchDebounceId) {
-      clearTimeout(this.searchDebounceId);
-    }
-    this.searchDebounceId = setTimeout(() => {
-      this.loadReceipts();
-    }, 300);
+    this.applyFilters();
   }
 
   onFiltersChange(): void {
-    this.loadReceipts();
+    this.applyFilters();
   }
 
   toggleFilters(): void {
@@ -190,32 +189,14 @@ export class ReceiptSearchComponent {
     this.errorMessage = '';
 
     try {
-      const params = new URLSearchParams();
-      if (this.searchText.trim()) {
-        params.set('search', this.searchText.trim());
-      }
-      if (this.sortOrder) {
-        params.set('order', this.sortOrder);
-      }
-      if (this.donatorFilter) {
-        params.set('donator', this.donatorFilter);
-      }
-      if (this.yearFilter) {
-        params.set('year', this.yearFilter);
-      }
-      if (this.monthFilter) {
-        params.set('month', this.monthFilter);
-      }
-
-      const query = params.toString();
       const receiptsResponse = await firstValueFrom(
         this.http.get<{ receipts?: ReceiptApiResponse['receipts'] }>(
-          `${this.apiBaseUrl}/api/list/receipt${query ? `?${query}` : ''}`
+          `${this.apiBaseUrl}/api/list/receipt`
         )
       );
 
       const receipts = receiptsResponse?.receipts ?? [];
-      this.receipts = receipts.map((receipt) => ({
+      this.allReceipts = receipts.map((receipt) => ({
         id: receipt._id,
         date: receipt.donationDate?.slice(0, 10) || '',
         donator: this.donatorMap.get(receipt.donatorID) || 'Inconnu',
@@ -226,9 +207,10 @@ export class ReceiptSearchComponent {
 
       if (this.yearOptions.length === 0) {
         this.yearOptions = Array.from(
-          new Set(this.receipts.map((row) => row.date.slice(0, 4)).filter(Boolean))
+          new Set(this.allReceipts.map((row) => row.date.slice(0, 4)).filter(Boolean))
         ).sort((a, b) => b.localeCompare(a));
       }
+      this.applyFilters();
     } catch (error) {
       this.errorMessage = "Impossible de charger les recus.";
     } finally {
@@ -241,6 +223,51 @@ export class ReceiptSearchComponent {
       this.isLoading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private applyFilters(): void {
+    const query = this.searchText.trim().toLowerCase();
+
+    const filtered = this.allReceipts.filter((receipt) => {
+      if (query) {
+        const searchHaystack = [
+          receipt.date,
+          receipt.donator,
+          receipt.amount.toFixed(2),
+          receipt.receiptNumber || ''
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        if (!searchHaystack.includes(query)) {
+          return false;
+        }
+      }
+
+      if (this.donatorFilter && receipt.donator !== this.donatorFilter) {
+        return false;
+      }
+
+      if (this.yearFilter && !receipt.date.startsWith(this.yearFilter)) {
+        return false;
+      }
+
+      if (this.monthFilter && receipt.date.slice(5, 7) !== this.monthFilter) {
+        return false;
+      }
+
+      return true;
+    });
+
+    filtered.sort((left, right) => {
+      const leftDate = left.date || '';
+      const rightDate = right.date || '';
+      return this.sortOrder === 'asc'
+        ? leftDate.localeCompare(rightDate)
+        : rightDate.localeCompare(leftDate);
+    });
+
+    this.receipts = filtered;
   }
 
   private parsePdfFromJson(buffer: ArrayBuffer | null): Blob | null {

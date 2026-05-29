@@ -1,24 +1,22 @@
 <section class="receipt-search">
   <header class="receipt-header">
     <a class="back-link" routerLink="/menu">Retour</a>
-    <h1>Rechercher un recu</h1>
-    <p>Filtrez les recu et telechargez le PDF.</p>
+    <h1>Rechercher un reçu</h1>
+    <p>Filtrez les reçus et téléchargez en PDF.</p>
   </header>
 
   <div class="search-card">
     <div class="search-top">
       <div class="search-bar">
-        <input
-          type="text"
-          name="search"
-          placeholder="Rechercher un donateur"
-          [(ngModel)]="searchText"
-          (ngModelChange)="onSearchChange()"
-        />
+        <input type="text" name="search" placeholder="Rechercher un donateur" [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()" />
       </div>
       <div class="receipt-count">
+        <small>Total :</small>
+        <span>{{ totalAmount.toFixed(2) }} €,</span>
+        <small>pour :</small>
         <span>{{ receiptCount }}</span>
-        <small>recu</small>
+        <small>reçus</small>
       </div>
     </div>
 
@@ -51,7 +49,7 @@
       </label>
 
       <label class="field">
-        <span>Annee</span>
+        <span>Année</span>
         <select name="year" [(ngModel)]="yearFilter" (ngModelChange)="onFiltersChange()">
           <option value="">Toutes</option>
           <option *ngFor="let option of yearOptions" [value]="option">{{ option }}</option>
@@ -73,7 +71,7 @@
       <span>Date</span>
       <span>Donateur</span>
       <span>Montant</span>
-      <span>Telecharger</span>
+      <span>Télécharger</span>
     </div>
 
     <div class="list-row" *ngFor="let row of filteredReceipts">
@@ -84,7 +82,7 @@
     </div>
 
     <div class="empty" *ngIf="filteredReceipts.length === 0">
-      Aucun recu trouve.
+      Aucun reçu trouvé.
     </div>
   </div>
 </section>

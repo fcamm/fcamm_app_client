@@ -95,6 +95,25 @@
   font-size: 0.9rem;
 }
 
+.error-text {
+  margin: 0;
+  color: #b14b4b;
+  font-weight: 600;
+}
+
+.field-error {
+  margin: 0;
+  color: #b14b4b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.required-indicator {
+  color: #b14b4b;
+  font-weight: 700;
+  margin-left: 0.2rem;
+}
+
 .helper.error {
   color: #b14b4b;
   font-weight: 600;
@@ -113,6 +132,11 @@
 }
 
 .primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn.is-disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

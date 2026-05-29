@@ -1,0 +1,51 @@
+<section class="receipt-search">
+  <header class="receipt-header">
+    <a class="back-link" routerLink="/menu">Retour</a>
+    <h1>Rechercher un donateur</h1>
+    <p>Consultez la liste des donateurs et leurs détails.</p>
+  </header>
+
+  <div class="search-card">
+    <div class="search-top">
+      <div class="search-bar">
+        <input
+          type="text"
+          name="search"
+          placeholder="Rechercher un donateur"
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+      <div class="donator-count">
+        <span>{{ donatorCount }}</span>
+        <small>donateurs</small>
+      </div>
+    </div>
+
+    <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p class="loading-text">Chargement des donateurs...</p>
+    </div>
+  </div>
+
+  <div class="list-card" *ngIf="!isLoading">
+    <div class="list-header">
+      <span>Nom</span>
+      <span>Nombre dereçus affiliés</span>
+      <span>Total des dons</span>
+      <span>Action</span>
+    </div>
+
+    <div class="list-row" *ngFor="let row of donators">
+      <span data-label="Nom">{{ row.name }}</span>
+      <span data-label="Total reçus affiliés">{{ row.totalReceiptsCount }}</span>
+      <span data-label="Total des dons">{{ row.totalDonationAmount.toFixed(2) }} €</span>
+      <button type="button" class="view-btn">Voir</button>
+    </div>
+
+    <div class="empty" *ngIf="!isLoading && donators.length === 0">
+      Aucun donateur trouvé.
+    </div>
+  </div>
+</section>

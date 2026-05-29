@@ -2,26 +2,35 @@
   <header class="donator-header">
     <a class="back-link" routerLink="/menu">Retour</a>
     <h1>Nouveau donateur</h1>
-    <p>Choisissez soit nom et prenom, soit nom de societe.</p>
+    <p>Choisissez soit nom et prenom, soit nom de société.</p>
   </header>
 
   <form class="form-card" (ngSubmit)="submit()">
     <div class="form-grid">
       <label class="field">
-        <span>Nom</span>
+        <span>Nom <span class="required-indicator" *ngIf="isPersonRequired">*</span></span>
         <input type="text" name="lastName" placeholder="Nom" [(ngModel)]="model.lastName" />
+        <p class="field-error" *ngIf="submitAttempted && isPersonRequired && !model.lastName.trim()">
+          Nom obligatoire.
+        </p>
       </label>
 
       <label class="field">
-        <span>Prenom</span>
-        <input type="text" name="firstName" placeholder="Prenom" [(ngModel)]="model.firstName" />
+        <span>Prénom <span class="required-indicator" *ngIf="isPersonRequired">*</span></span>
+        <input type="text" name="firstName" placeholder="Prénom" [(ngModel)]="model.firstName" />
+        <p class="field-error" *ngIf="submitAttempted && isPersonRequired && !model.firstName.trim()">
+          Prenom obligatoire.
+        </p>
       </label>
 
       <div class="divider">OU</div>
 
       <label class="field">
-        <span>Nom de societe</span>
-        <input type="text" name="companyName" placeholder="Societe" [(ngModel)]="model.companyName" />
+        <span>Nom de société <span class="required-indicator" *ngIf="isCompanyRequired">*</span></span>
+        <input type="text" name="companyName" placeholder="Société" [(ngModel)]="model.companyName" />
+        <p class="field-error" *ngIf="submitAttempted && isCompanyRequired && !model.companyName.trim()">
+          Societe obligatoire.
+        </p>
       </label>
 
       <div class="section-separator"></div>
@@ -32,26 +41,53 @@
       </label>
 
       <label class="field">
-        <span>Ville</span>
+        <span>Ville <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
         <input type="text" name="city" placeholder="Ville" [(ngModel)]="model.city" />
+        <p class="field-error" *ngIf="submitAttempted && isAddressDetailsRequired && !model.city.trim()">
+          Ville obligatoire.
+        </p>
       </label>
 
       <label class="field">
-        <span>Code postal</span>
-        <input type="text" name="postalCode" placeholder="Code postal" [(ngModel)]="model.postalCode" />
+        <span>Code postal <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
+        <input
+          type="number"
+          name="postalCode"
+          placeholder="Code postal"
+          inputmode="numeric"
+          pattern="\d+"
+          minlength="5"
+          maxlength="10"
+          [(ngModel)]="model.postalCode"
+          (input)="onPostalCodeInput($event.target.value)"
+        />
+        <p class="field-error" *ngIf="submitAttempted && isAddressDetailsRequired && !model.postalCode.trim()">
+          Code postal obligatoire.
+        </p>
+        <p class="field-error" *ngIf="submitAttempted && model.postalCode.trim() && model.postalCode.trim().length < 5">
+          Le code postal doit contenir au moins 5 chiffres.
+        </p>
       </label>
 
       <label class="field">
-        <span>Pays</span>
-        <input type="text" name="country" placeholder="Pays" [(ngModel)]="model.country" />
+        <span>Pays <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
+        <input type="text" name="country" placeholder="Pays" [(ngModel)]="model.country" disabled />
       </label>
     </div>
 
     <div class="form-actions">
+      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
       <p class="helper" [class.error]="hasModeConflict">
         {{ hasModeConflict ? 'Choisissez soit une personne, soit une societe.' : 'Tous les champs restants sont optionnels.' }}
       </p>
-      <button class="primary-btn" type="submit" [disabled]="!canSubmit">Enregistrer</button>
+      <button
+        class="primary-btn"
+        type="submit"
+        [disabled]="isSubmitting"
+        [class.is-disabled]="!canSubmit"
+      >
+        {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
     </div>
   </form>
 </section>

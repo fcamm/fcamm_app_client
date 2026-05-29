@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, effect, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ToastComponent } from './components/toast/toast.component';
 import { ServerStatusService } from './services/server-status.service';
+import { ToastService } from './services/toast.service';
 
 @Component({
   selector: 'app-root',
@@ -14,8 +15,20 @@ export class App {
   protected readonly title = signal('fcamm_editor_front');
   protected readonly serverStatus: ServerStatusService;
 
-  constructor(serverStatus: ServerStatusService, private readonly router: Router) {
+  constructor(
+    serverStatus: ServerStatusService,
+    private readonly router: Router,
+    private readonly toastService: ToastService
+  ) {
     this.serverStatus = serverStatus;
+
+    effect(() => {
+      if (this.serverStatus.timeoutReached()) {
+        if (this.serverStatus.consumeTimeoutFlag()) {
+          this.toastService.show('Serveur indisponible, veuillez reessayer plus tard.', 'error', 5000);
+        }
+      }
+    });
   }
 
   get isLoginRoute(): boolean {
