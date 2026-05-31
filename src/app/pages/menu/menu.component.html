@@ -11,6 +11,7 @@
     <button class="menu-btn" type="button" routerLink="/donator/search">Rechercher un donateur</button>
     <button class="menu-btn" type="button" routerLink="/receipt/search">Rechercher un recu</button>
     <div class="menu-separator" aria-hidden="true"></div>
+    <button *ngIf="isAdmin" class="menu-btn menu-btn-admin" type="button" routerLink="/admin">Portail administrateur</button>
     <button class="menu-btn menu-btn-logout" type="button" (click)="logout()">Deconnexion</button>
   </div>
 </section>

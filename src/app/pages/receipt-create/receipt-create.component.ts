@@ -67,7 +67,8 @@ export class ReceiptCreateComponent implements OnInit {
   receiptModel = {
     amountInput: '',
     donationDate: '',
-    paymentMethod: ''
+    paymentMethod: '',
+    subject: 'Centre Islamique de Montreuil'
   };
 
   paymentMethods = [
@@ -202,7 +203,8 @@ export class ReceiptCreateComponent implements OnInit {
             donatorID: donatorId,
             amount: this.parseAmount(this.receiptModel.amountInput),
             donationDate: this.receiptModel.donationDate,
-            paymentMethod: this.receiptModel.paymentMethod
+            paymentMethod: this.receiptModel.paymentMethod,
+            subject: this.receiptModel.subject
           },
           { withCredentials: true }
         )
@@ -382,7 +384,8 @@ export class ReceiptCreateComponent implements OnInit {
     this.receiptModel = {
       amountInput: '',
       donationDate: '',
-      paymentMethod: ''
+      paymentMethod: '',
+      subject: ''
     };
   }
 

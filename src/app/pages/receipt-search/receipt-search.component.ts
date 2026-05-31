@@ -27,7 +27,7 @@ interface ReceiptApiResponse {
 }
 
 interface DonatorApiResponse {
-  donator?: Array<{
+  donators?: Array<{
     _id: string;
     firstName?: string;
     lastName?: string;
@@ -159,12 +159,12 @@ export class ReceiptSearchComponent {
   private async loadDonators(): Promise<void> {
     try {
       const donatorsResponse = await firstValueFrom(
-        this.http.get<{ donator?: DonatorApiResponse['donator'] }>(
+        this.http.get<{ donators?: DonatorApiResponse['donators'] }>(
           `${this.apiBaseUrl}/api/list/donator`
         )
       );
 
-      const donators = donatorsResponse?.donator ?? [];
+      const donators = donatorsResponse?.donators ?? [];
       const options: string[] = [];
       const map = new Map<string, string>();
       for (const donator of donators) {

@@ -115,6 +115,22 @@
           <input type="text" name="amountWords" [value]="amountWords" readonly />
         </label>
 
+        <label class="field field-wide">
+          <span>Motif du don</span>
+          <input 
+          type="text" 
+          name="subject" 
+          [(ngModel)]="receiptModel.subject"
+          placeholder="Motif du don"
+          required
+          #subjectModel="ngModel"
+          />
+          <p class="field-error" *ngIf="submitAttempted && subjectModel.invalid">
+            Motif du don obligatoire.
+          </p>
+        </label>
+        
+
         <label class="field">
           <span>Date du don <span class="required-indicator">*</span></span>
           <input

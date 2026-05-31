@@ -83,6 +83,11 @@
   color: #8f3b3b;
 }
 
+.menu-btn-admin {
+  background: linear-gradient(135deg, rgba(123, 75, 177, 0.18), rgba(255, 255, 255, 0.92));
+  color: #463b8f;
+}
+
 .menu-btn:active {
   transform: translateY(1px) scale(0.99);
   box-shadow: 0 6px 16px rgba(12, 40, 42, 0.1);

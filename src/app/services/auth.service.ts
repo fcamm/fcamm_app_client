@@ -1,3 +1,4 @@
+
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -16,6 +17,27 @@ export class AuthService {
         private readonly http: HttpClient
     ) {
         this.isBrowser = isPlatformBrowser(platformId);
+    }
+
+    /**
+     * Retourne le rôle de l'utilisateur connecté (si stocké dans le token, ou null sinon)
+     */
+    getUserRole(): string | null {
+        const token = this.getToken();
+        if (!token) return null;
+        try {
+            // Si le token est un JWT, il faut décoder la partie payload
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.role || null;
+        } catch {
+            // Sinon, on tente de lire un objet JSON simple
+            try {
+                const obj = JSON.parse(token);
+                return obj.role || null;
+            } catch {
+                return null;
+            }
+        }
     }
 
     getToken(): string | null {
