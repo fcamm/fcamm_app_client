@@ -41,7 +41,7 @@
       <span data-label="Nom">{{ row.name }}</span>
       <span data-label="Total reçus affiliés">{{ row.totalReceiptsCount }}</span>
       <span data-label="Total des dons">{{ row.totalDonationAmount.toFixed(2) }} €</span>
-      <button type="button" class="view-btn">Voir</button>
+      <a class="view-btn" [routerLink]="['/donator', row.id]">Voir</a>
     </div>
 
     <div class="empty" *ngIf="!isLoading && donators.length === 0">

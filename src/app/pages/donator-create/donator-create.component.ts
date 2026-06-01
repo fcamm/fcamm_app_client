@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -22,14 +22,18 @@ export class DonatorCreateComponent {
     address: '',
     city: '',
     postalCode: '',
-    country: 'France'
+    country: 'France',
+    email: ''
   };
 
   isSubmitting = false;
   submitAttempted = false;
   errorMessage = '';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router
+  ) {}
 
   get hasCompanyName(): boolean {
     return this.model.companyName.trim().length > 0;
@@ -83,6 +87,7 @@ export class DonatorCreateComponent {
       );
       this.resetForm();
       this.submitAttempted = false;
+      await this.router.navigate(['/menu']);
     } catch (error) {
       this.errorMessage = this.getErrorMessage(error);
     } finally {
@@ -113,6 +118,7 @@ export class DonatorCreateComponent {
     assignIfValue('city', this.model.city);
     assignIfValue('postalCode', this.model.postalCode);
     assignIfValue('country', this.model.country);
+    assignIfValue('email', this.model.email);
 
     return payload;
   }
@@ -125,7 +131,8 @@ export class DonatorCreateComponent {
       address: '',
       city: '',
       postalCode: '',
-      country: 'France'
+      country: 'France',
+      email: ''
     };
   }
 

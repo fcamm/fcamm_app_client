@@ -1,0 +1,49 @@
+<section class="user-list">
+  <header class="user-header">
+    <a class="back-link" routerLink="/admin">Retour</a>
+    <h1>Liste des utilisateurs</h1>
+    <p>Consultez les profils existants.</p>
+  </header>
+
+  <div class="search-card">
+    <div class="search-top">
+      <div class="search-bar">
+        <input
+          type="text"
+          name="search"
+          placeholder="Rechercher un utilisateur"
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+      <div class="user-count">
+        <span>{{ userCount }}</span>
+        <small>utilisateurs</small>
+      </div>
+    </div>
+
+    <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p class="loading-text">Chargement des utilisateurs...</p>
+    </div>
+  </div>
+
+  <div class="list-card" *ngIf="!isLoading">
+    <div class="list-header">
+      <span>Nom d'utilisateur</span>
+      <span>Role</span>
+      <span>Action</span>
+    </div>
+
+    <div class="list-row" *ngFor="let user of users">
+      <span data-label="Nom d'utilisateur">{{ user.userName }}</span>
+      <span data-label="Role">{{ user.role }}</span>
+      <a class="view-btn" [routerLink]="['/admin/user', user.id]">Voir</a>
+    </div>
+
+    <div class="empty" *ngIf="!isLoading && users.length === 0">
+      Aucun utilisateur trouve.
+    </div>
+  </div>
+</section>

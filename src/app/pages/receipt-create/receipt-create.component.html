@@ -16,19 +16,34 @@
       <div class="select-row" *ngIf="useExistingDonator">
         <label class="field">
           <span>Sélection du donateur <span class="required-indicator">*</span></span>
-          <input
-            type="text"
-            name="donatorSearch"
-            placeholder="Nom ou société"
-            list="donatorsList"
-            [(ngModel)]="filterText"
-            (change)="onDonatorLabelChange()"
-            [disabled]="isLoadingDonators"
-          />
+          <div class="search-select">
+            <input
+              type="text"
+              name="donatorSearch"
+              placeholder="Nom ou société"
+              [(ngModel)]="filterText"
+              (input)="onDonatorInput()"
+              (focus)="openDonatorDropdown()"
+              (blur)="closeDonatorDropdown()"
+              [disabled]="isLoadingDonators"
+              autocomplete="off"
+            />
+            <span class="search-caret" aria-hidden="true"></span>
+            <div class="search-dropdown" *ngIf="showDonatorDropdown">
+              <button
+                type="button"
+                class="search-option"
+                *ngFor="let donator of filteredDonators"
+                (mousedown)="selectDonatorOption(donator)"
+              >
+                {{ donator.companyName || (donator.firstName + ' ' + donator.lastName) }}
+              </button>
+              <div class="search-empty" *ngIf="filteredDonators.length === 0">
+                Aucun donateur trouvé.
+              </div>
+            </div>
+          </div>
         </label>
-        <datalist id="donatorsList">
-          <option *ngFor="let donator of filteredDonators" [value]="donator.companyName || (donator.firstName + ' ' + donator.lastName)"></option>
-        </datalist>
         <p class="helper" *ngIf="isLoadingDonators">Chargement des donateurs...</p>
         <p class="field-error" *ngIf="submitAttempted && !selectedDonatorId">
           Veuillez selectionner un donateur.
@@ -83,6 +98,11 @@
         <label class="field">
           <span>Pays</span>
           <input type="text" name="country" placeholder="Pays" [(ngModel)]="donatorModel.country" disabled />
+        </label>
+
+        <label class="field field-wide">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="Email" [(ngModel)]="donatorModel.email" />
         </label>
       </div>
     </div>
@@ -173,6 +193,41 @@
       >
         {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer le reçu' }}
       </button>
+    </div>
+
+    <div class="action-card" *ngIf="postCreateAction">
+      <div class="action-header">
+        <h3>Recu cree</h3>
+        <p>Que voulez-vous faire maintenant ?</p>
+      </div>
+
+      <label class="field">
+        <span>Email pour envoi</span>
+        <input
+          type="email"
+          name="actionEmail"
+          placeholder="adresse@email.com"
+          [(ngModel)]="actionEmail"
+        />
+      </label>
+      <p class="field-error" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</p>
+
+      <div class="action-row">
+        <button type="button" class="secondary-btn" (click)="downloadCreatedReceipt()">
+          Telecharger le recu
+        </button>
+        <button
+          type="button"
+          class="primary-btn"
+          (click)="sendCreatedReceipt()"
+          [disabled]="isSendingEmail"
+        >
+          {{ isSendingEmail ? 'Envoi...' : 'Envoyer par email' }}
+        </button>
+        <button type="button" class="ghost-btn" (click)="skipPostCreateAction()">
+          Ignorer
+        </button>
+      </div>
     </div>
   </form>
 </section>

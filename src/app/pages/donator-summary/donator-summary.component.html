@@ -1,0 +1,164 @@
+<section class="donator-summary">
+  <header class="donator-header">
+    <a class="back-link" routerLink="/donator/search">Retour</a>
+    <h1>Resume du donateur</h1>
+    <p>Details et recus associes.</p>
+  </header>
+
+  <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <p class="loading-text">Chargement du donateur...</p>
+  </div>
+
+  <div class="actions" *ngIf="!isLoading && donator">
+    <button type="button" class="secondary-btn" *ngIf="!isEditing" (click)="startEdit()">
+      Modifier
+    </button>
+  </div>
+
+  <div class="details-card" *ngIf="!isLoading && donator && !isEditing">
+    <div class="detail-item">
+      <span class="label">Donateur</span>
+      <span class="value">{{ displayName }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Adresse ligne 1</span>
+      <span class="value">{{ addressLine }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Code postal / Ville</span>
+      <span class="value">{{ cityLine }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Email</span>
+      <span class="value">{{ emailLine }}</span>
+    </div>
+  </div>
+
+  <form class="edit-card" *ngIf="!isLoading && donator && isEditing" (ngSubmit)="saveEdit()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Nom <span class="required-indicator" *ngIf="isPersonRequired">*</span></span>
+        <input type="text" name="lastName" placeholder="Nom" [(ngModel)]="editModel.lastName" />
+        <p class="field-error" *ngIf="submitAttempted && isPersonRequired && !editModel.lastName.trim()">
+          Nom obligatoire.
+        </p>
+      </label>
+
+      <label class="field">
+        <span>Prenom <span class="required-indicator" *ngIf="isPersonRequired">*</span></span>
+        <input type="text" name="firstName" placeholder="Prenom" [(ngModel)]="editModel.firstName" />
+        <p class="field-error" *ngIf="submitAttempted && isPersonRequired && !editModel.firstName.trim()">
+          Prenom obligatoire.
+        </p>
+      </label>
+
+      <div class="divider">OU</div>
+
+      <label class="field">
+        <span>Nom de societe <span class="required-indicator" *ngIf="isCompanyRequired">*</span></span>
+        <input type="text" name="companyName" placeholder="Societe" [(ngModel)]="editModel.companyName" />
+        <p class="field-error" *ngIf="submitAttempted && isCompanyRequired && !editModel.companyName.trim()">
+          Societe obligatoire.
+        </p>
+      </label>
+
+      <div class="section-separator"></div>
+
+      <label class="field field-wide">
+        <span>Adresse ligne 1</span>
+        <input type="text" name="address" placeholder="Adresse" [(ngModel)]="editModel.address" />
+      </label>
+
+      <label class="field">
+        <span>Ville <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
+        <input type="text" name="city" placeholder="Ville" [(ngModel)]="editModel.city" />
+        <p class="field-error" *ngIf="submitAttempted && isAddressDetailsRequired && !editModel.city.trim()">
+          Ville obligatoire.
+        </p>
+      </label>
+
+      <label class="field">
+        <span>Code postal <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
+        <input
+          type="number"
+          name="postalCode"
+          placeholder="Code postal"
+          inputmode="numeric"
+          pattern="\d+"
+          minlength="5"
+          maxlength="10"
+          [(ngModel)]="editModel.postalCode"
+          (input)="onPostalCodeInput($event.target.value)"
+        />
+        <p class="field-error" *ngIf="submitAttempted && isAddressDetailsRequired && !editModel.postalCode.trim()">
+          Code postal obligatoire.
+        </p>
+        <p
+          class="field-error"
+          *ngIf="submitAttempted && editModel.postalCode.trim() && editModel.postalCode.trim().length < 5"
+        >
+          Le code postal doit contenir au moins 5 chiffres.
+        </p>
+      </label>
+
+      <label class="field">
+        <span>Pays <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
+        <input type="text" name="country" placeholder="Pays" [(ngModel)]="editModel.country" />
+      </label>
+
+      <label class="field field-wide">
+        <span>Email</span>
+        <input type="email" name="email" placeholder="Email" [(ngModel)]="editModel.email" />
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <p class="error-text" *ngIf="updateErrorMessage">{{ updateErrorMessage }}</p>
+      <p class="helper" [class.error]="hasModeConflict">
+        {{ hasModeConflict ? 'Choisissez soit une personne, soit une societe.' : 'Tous les champs restants sont optionnels.' }}
+      </p>
+      <div class="action-row">
+        <button type="button" class="ghost-btn" (click)="cancelEdit()" [disabled]="isSaving">
+          Annuler
+        </button>
+        <button
+          class="primary-btn"
+          type="submit"
+          [disabled]="isSaving || !canSubmit"
+          [class.is-disabled]="!canSubmit"
+        >
+          {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="list-card" *ngIf="!isLoading && donator">
+    <div class="list-header">
+      <span>Numero</span>
+      <span>Date</span>
+      <span>Montant</span>
+      <span>Telecharger</span>
+    </div>
+
+    <div class="list-row" *ngFor="let receipt of receipts">
+      <span data-label="Numero">{{ receipt.receiptNumber }}</span>
+      <span data-label="Date">{{ receipt.date }}</span>
+      <span data-label="Montant">{{ receipt.amount.toFixed(2) }} €</span>
+      <button
+        type="button"
+        class="download-btn"
+        data-label="Telecharger"
+        (click)="downloadReceipt(receipt.id)"
+      >
+        PDF
+      </button>
+    </div>
+
+    <div class="empty" *ngIf="receipts.length === 0">
+      Aucun recu pour ce donateur.
+    </div>
+  </div>
+</section>

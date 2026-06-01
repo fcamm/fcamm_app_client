@@ -1,0 +1,43 @@
+<section class="user-form">
+  <header class="user-header">
+    <a class="back-link" routerLink="/admin">Retour</a>
+    <h1>Creer un utilisateur</h1>
+    <p>Ajoutez un nouvel utilisateur admin.</p>
+  </header>
+
+  <form class="form-card" (ngSubmit)="submit()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Nom d'utilisateur <span class="required-indicator">*</span></span>
+        <input type="text" name="userName" placeholder="Identifiant" [(ngModel)]="model.userName" />
+      </label>
+
+      <label class="field">
+        <span>Mot de passe <span class="required-indicator">*</span></span>
+        <input type="password" name="password" placeholder="Mot de passe" [(ngModel)]="model.password" />
+      </label>
+
+      <label class="field field-wide">
+        <span>Role <span class="required-indicator">*</span></span>
+        <select name="role" [(ngModel)]="model.role">
+          <option value="" disabled>Choisir un role</option>
+          <option *ngFor="let role of roleOptions" [value]="role.value">
+            {{ role.label }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <button
+        class="primary-btn"
+        type="submit"
+        [disabled]="isSubmitting"
+        [class.is-disabled]="!canSubmit"
+      >
+        {{ isSubmitting ? 'Enregistrement...' : 'Creer l\'utilisateur' }}
+      </button>
+    </div>
+  </form>
+</section>

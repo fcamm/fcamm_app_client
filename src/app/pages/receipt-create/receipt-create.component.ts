@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -15,6 +15,7 @@ interface DonatorOption {
   city: string;
   postalCode: string;
   country: string;
+  email?: string;
 }
 
 interface DonatorListResponse {
@@ -35,6 +36,11 @@ interface ReceiptCreateResponse {
   };
 }
 
+interface ReceiptActionState {
+  pdfId: string;
+  receiptNumber?: string;
+}
+
 @Component({
   selector: 'app-receipt-create',
   standalone: true,
@@ -51,6 +57,11 @@ export class ReceiptCreateComponent implements OnInit {
   isSubmitting = false;
   submitAttempted = false;
   errorMessage = '';
+  actionErrorMessage = '';
+  actionEmail = '';
+  isSendingEmail = false;
+  postCreateAction: ReceiptActionState | null = null;
+  showDonatorDropdown = false;
 
   donators: DonatorOption[] = [];
 
@@ -61,7 +72,8 @@ export class ReceiptCreateComponent implements OnInit {
     address: '',
     city: '',
     postalCode: '',
-    country: 'France'
+    country: 'France',
+    email: ''
   };
 
   receiptModel = {
@@ -95,10 +107,17 @@ export class ReceiptCreateComponent implements OnInit {
       return false;
     }
 
+    if (this.postCreateAction) {
+      return false;
+    }
+
     return this.getValidationMessage().length === 0;
   }
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.loadDonators();
@@ -123,6 +142,8 @@ export class ReceiptCreateComponent implements OnInit {
       return;
     }
 
+    this.filterText = this.getDonatorLabel(selected);
+
     this.donatorModel = {
       lastName: selected.lastName,
       firstName: selected.firstName,
@@ -130,7 +151,8 @@ export class ReceiptCreateComponent implements OnInit {
       address: selected.address,
       city: selected.city,
       postalCode: selected.postalCode,
-      country: selected.country
+      country: selected.country,
+      email: selected.email || ''
     };
   }
 
@@ -151,6 +173,28 @@ export class ReceiptCreateComponent implements OnInit {
     this.onDonatorSelect();
   }
 
+  onDonatorInput(): void {
+    this.showDonatorDropdown = true;
+    this.onDonatorLabelChange();
+  }
+
+  openDonatorDropdown(): void {
+    this.showDonatorDropdown = true;
+  }
+
+  closeDonatorDropdown(): void {
+    window.setTimeout(() => {
+      this.showDonatorDropdown = false;
+    }, 150);
+  }
+
+  selectDonatorOption(donator: DonatorOption): void {
+    this.selectedDonatorId = donator.id;
+    this.filterText = this.getDonatorLabel(donator);
+    this.onDonatorSelect();
+    this.showDonatorDropdown = false;
+  }
+
   clearDonatorForm(): void {
     this.selectedDonatorId = '';
     this.donatorModel = {
@@ -160,7 +204,8 @@ export class ReceiptCreateComponent implements OnInit {
       address: '',
       city: '',
       postalCode: '',
-      country: 'France'
+      country: 'France',
+      email: ''
     };
   }
 
@@ -212,24 +257,67 @@ export class ReceiptCreateComponent implements OnInit {
 
       const pdfId = receiptResponse?.receipt?.pdfID;
       const receiptNumber = receiptResponse?.receipt?.receiptNumber;
+
       if (pdfId) {
-        await this.downloadReceiptPdf(pdfId, receiptNumber);
+        this.actionEmail = this.resolveActionEmail(donatorId);
+        this.postCreateAction = { pdfId, receiptNumber };
       }
 
       await this.loadDonators();
-      this.resetReceiptForm();
       this.submitAttempted = false;
-      if (this.useExistingDonator) {
-        this.filterText = '';
-        this.selectedDonatorId = '';
-      } else {
-        this.clearDonatorForm();
-      }
+      this.actionErrorMessage = '';
     } catch (error) {
       this.errorMessage = this.getErrorMessage(error);
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  async downloadCreatedReceipt(): Promise<void> {
+    if (!this.postCreateAction) {
+      return;
+    }
+
+    await this.downloadReceiptPdf(this.postCreateAction.pdfId, this.postCreateAction.receiptNumber);
+    this.finalizePostCreateAction();
+  }
+
+  async sendCreatedReceipt(): Promise<void> {
+    if (!this.postCreateAction || this.isSendingEmail) {
+      return;
+    }
+
+    const email = this.actionEmail.trim();
+    if (!email) {
+      this.actionErrorMessage = 'Email obligatoire pour envoyer le recu.';
+      return;
+    }
+
+    this.isSendingEmail = true;
+    this.actionErrorMessage = '';
+
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `${this.apiBaseUrl}/api/receipt/send`,
+          { email, pdfID: this.postCreateAction.pdfId },
+          { withCredentials: true }
+        )
+      );
+      this.finalizePostCreateAction();
+    } catch (error) {
+      this.actionErrorMessage = this.getErrorMessage(error);
+    } finally {
+      this.isSendingEmail = false;
+    }
+  }
+
+  skipPostCreateAction(): void {
+    if (!this.postCreateAction) {
+      return;
+    }
+
+    this.finalizePostCreateAction();
   }
 
   onPostalCodeInput(value: string): void {
@@ -333,6 +421,7 @@ export class ReceiptCreateComponent implements OnInit {
     assignIfValue('city', this.donatorModel.city);
     assignIfValue('postalCode', this.donatorModel.postalCode);
     assignIfValue('country', this.donatorModel.country);
+    assignIfValue('email', this.donatorModel.email);
 
     return payload;
   }
@@ -342,6 +431,15 @@ export class ReceiptCreateComponent implements OnInit {
     const normalized = raw.replace(',', '.').trim();
     const amount = Number(normalized);
     return Number.isFinite(amount) ? amount : 0;
+  }
+
+  private resolveActionEmail(donatorId: string): string {
+    if (!this.useExistingDonator) {
+      return this.donatorModel.email.trim();
+    }
+
+    const selected = this.donators.find((donator) => donator.id === donatorId);
+    return selected?.email?.trim() || '';
   }
 
   private parsePdfFromJson(buffer: ArrayBuffer | null): Blob | null {
@@ -387,6 +485,21 @@ export class ReceiptCreateComponent implements OnInit {
       paymentMethod: '',
       subject: ''
     };
+  }
+
+  private finalizePostCreateAction(): void {
+    this.postCreateAction = null;
+    this.actionEmail = '';
+    this.actionErrorMessage = '';
+    this.resetReceiptForm();
+    if (this.useExistingDonator) {
+      this.filterText = '';
+      this.selectedDonatorId = '';
+    } else {
+      this.clearDonatorForm();
+    }
+
+    this.router.navigate(['/menu']);
   }
 
   private getValidationMessage(): string {

@@ -62,6 +62,7 @@
   margin-bottom: 1rem;
 }
 
+
 .form-grid {
   display: grid;
   gap: 1rem;
@@ -82,6 +83,68 @@
   padding: 0 0.9rem;
   font-size: 1rem;
   background: #fff;
+}
+
+.search-select {
+  position: relative;
+}
+
+.search-select input {
+  width: 100%;
+  padding-right: 2.6rem;
+}
+
+.search-caret {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid rgba(16, 34, 38, 0.6);
+  pointer-events: none;
+}
+
+.search-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 34, 38, 0.12);
+  box-shadow: 0 16px 40px rgba(10, 18, 20, 0.18);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 10;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.4rem;
+}
+
+.search-option {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.search-option:hover,
+.search-option:focus {
+  background: rgba(15, 124, 122, 0.12);
+  outline: none;
+}
+
+.search-empty {
+  padding: 0.6rem 0.7rem;
+  color: var(--ink-500);
+  font-weight: 500;
 }
 
 .amount-input {
@@ -141,6 +204,54 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+}
+
+.action-card {
+  margin-top: 1rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 1rem;
+}
+
+.action-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.action-header p {
+  margin: 0.3rem 0 0;
+  color: var(--ink-500);
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.secondary-btn,
+.ghost-btn {
+  height: 52px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 1.4rem;
+}
+
+.secondary-btn {
+  border: none;
+  background: rgba(15, 124, 122, 0.12);
+  color: var(--teal-700);
+}
+
+.ghost-btn {
+  border: 1px solid rgba(16, 34, 38, 0.18);
+  background: transparent;
+  color: var(--ink-700);
 }
 
 .error-text {

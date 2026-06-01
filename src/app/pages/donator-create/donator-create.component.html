@@ -73,6 +73,11 @@
         <span>Pays <span class="required-indicator" *ngIf="isAddressDetailsRequired">*</span></span>
         <input type="text" name="country" placeholder="Pays" [(ngModel)]="model.country" disabled />
       </label>
+
+      <label class="field field-wide">
+        <span>Email</span>
+        <input type="email" name="email" placeholder="Email" [(ngModel)]="model.email" />
+      </label>
     </div>
 
     <div class="form-actions">

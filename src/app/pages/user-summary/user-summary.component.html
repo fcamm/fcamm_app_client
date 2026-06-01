@@ -1,0 +1,74 @@
+<section class="user-summary">
+  <header class="user-header">
+    <a class="back-link" routerLink="/admin/user/list">Retour</a>
+    <h1>Profil utilisateur</h1>
+    <p>Informations et statistiques.</p>
+  </header>
+
+  <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <p class="loading-text">Chargement de l'utilisateur...</p>
+  </div>
+
+  <div class="actions" *ngIf="!isLoading && user">
+    <button type="button" class="secondary-btn" *ngIf="!isEditing" (click)="startEdit()">
+      Modifier
+    </button>
+  </div>
+
+  <div class="details-card" *ngIf="!isLoading && user && !isEditing">
+    <div class="detail-item">
+      <span class="label">Nom d'utilisateur</span>
+      <span class="value">{{ user.userName }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Role</span>
+      <span class="value">{{ user.role }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Nombre de recus</span>
+      <span class="value">{{ receiptCount }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="label">Nombre de donateurs</span>
+      <span class="value">{{ donatorCount }}</span>
+    </div>
+  </div>
+
+  <form class="edit-card" *ngIf="!isLoading && user && isEditing" (ngSubmit)="saveEdit()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Nom d'utilisateur <span class="required-indicator">*</span></span>
+        <input type="text" name="userName" placeholder="Identifiant" [(ngModel)]="editModel.userName" />
+      </label>
+
+      <label class="field">
+        <span>Mot de passe</span>
+        <input type="password" name="password" placeholder="Mot de passe" [(ngModel)]="editModel.password" />
+      </label>
+
+      <label class="field field-wide">
+        <span>Role <span class="required-indicator">*</span></span>
+        <select name="role" [(ngModel)]="editModel.role">
+          <option value="" disabled>Choisir un role</option>
+          <option *ngFor="let role of roleOptions" [value]="role.value">
+            {{ role.label }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <p class="error-text" *ngIf="updateErrorMessage">{{ updateErrorMessage }}</p>
+      <div class="action-row">
+        <button type="button" class="ghost-btn" (click)="cancelEdit()" [disabled]="isSaving">
+          Annuler
+        </button>
+        <button class="primary-btn" type="submit" [disabled]="isSaving" [class.is-disabled]="!canSubmit">
+          {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
