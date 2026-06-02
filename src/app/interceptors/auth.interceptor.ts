@@ -114,7 +114,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 const waitForServerOnline = async (requestUrl: string): Promise<void> => {
-  const maxWaitMs = 90_000;
+  const maxWaitMs = 180_000;
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < maxWaitMs) {

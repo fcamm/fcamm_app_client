@@ -8,7 +8,7 @@ export class ServerStatusService {
   readonly timeoutReached = this.timeoutSignal.asReadonly();
   private pollingId?: number;
   private offlineTimeoutId?: number;
-  private readonly offlineTimeoutMs = 90_000;
+  private readonly offlineTimeoutMs = 180_000;
 
   setOffline(isOffline: boolean): void {
     this.offlineSignal.set(isOffline);
