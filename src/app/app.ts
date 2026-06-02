@@ -4,6 +4,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { ToastComponent } from './components/toast/toast.component';
 import { ServerStatusService } from './services/server-status.service';
 import { ToastService } from './services/toast.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +19,8 @@ export class App {
   constructor(
     serverStatus: ServerStatusService,
     private readonly router: Router,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly authService: AuthService
   ) {
     this.serverStatus = serverStatus;
 
@@ -33,5 +35,10 @@ export class App {
 
   get isLoginRoute(): boolean {
     return this.router.url.startsWith('/login');
+  }
+
+  get isTester(): boolean {
+    const role = this.authService.getUserRole();
+    return Boolean(role && role.toLowerCase() === 'tester');
   }
 }

@@ -123,6 +123,14 @@ export class DonatorSummaryComponent implements OnInit {
     return this.editModel.companyName.trim().length > 0;
   }
 
+  get totalDonationAmount(): number {
+    return this.receipts.reduce((sum, receipt) => sum + (Number.isFinite(receipt.amount) ? receipt.amount : 0), 0);
+  }
+
+  get totalReceipts(): number {
+    return this.receipts.length;
+  }
+
   get hasPersonName(): boolean {
     return this.editModel.firstName.trim().length > 0 || this.editModel.lastName.trim().length > 0;
   }

@@ -3,6 +3,7 @@
     <router-outlet></router-outlet>
   </div>
   <app-toast></app-toast>
+  <div class="tester-badge" *ngIf="isTester">Mode tester</div>
   <div class="server-overlay" *ngIf="serverStatus.isOffline() && !isLoginRoute">
     <div class="server-overlay__card">
       <div class="server-overlay__spinner" aria-hidden="true"></div>

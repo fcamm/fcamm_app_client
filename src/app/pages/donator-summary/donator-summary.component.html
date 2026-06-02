@@ -11,10 +11,15 @@
     <p class="loading-text">Chargement du donateur...</p>
   </div>
 
-  <div class="actions" *ngIf="!isLoading && donator">
-    <button type="button" class="secondary-btn" *ngIf="!isEditing" (click)="startEdit()">
-      Modifier
-    </button>
+  <div class="summary-bar" *ngIf="!isLoading && donator">
+    <div class="donation-summary">
+      Total : {{ totalDonationAmount.toFixed(2) }} €, pour : {{ totalReceipts }} recus
+    </div>
+    <div class="actions">
+      <button type="button" class="secondary-btn" *ngIf="!isEditing" (click)="startEdit()">
+        Modifier
+      </button>
+    </div>
   </div>
 
   <div class="details-card" *ngIf="!isLoading && donator && !isEditing">
