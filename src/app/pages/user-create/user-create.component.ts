@@ -35,6 +35,7 @@ export class UserCreateComponent {
   isSubmitting = false;
   submitAttempted = false;
   errorMessage = '';
+  showPassword = false;
 
   constructor(
     private readonly http: HttpClient,
@@ -47,6 +48,10 @@ export class UserCreateComponent {
     }
 
     return Boolean(this.model.userName.trim() && this.model.password.trim() && this.model.role);
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   async submit(): Promise<void> {

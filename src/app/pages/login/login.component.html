@@ -26,15 +26,25 @@
 
       <label class="field">
         <span>Mot de passe <span class="required-indicator">*</span></span>
-        <input
-          type="password"
-          name="password"
-          placeholder="Votre mot de passe"
-          autocomplete="current-password"
-          [(ngModel)]="model.password"
-          required
-          #passwordModel="ngModel"
-        />
+        <div class="password-field">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            placeholder="Votre mot de passe"
+            autocomplete="current-password"
+            [(ngModel)]="model.password"
+            required
+            #passwordModel="ngModel"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="showPassword"
+          >
+            {{ showPassword ? 'Caché' : 'Voir' }}
+          </button>
+        </div>
         <p class="field-error" *ngIf="submitAttempted && passwordModel.invalid">
           Mot de passe obligatoire.
         </p>

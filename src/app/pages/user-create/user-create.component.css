@@ -58,6 +58,28 @@
   background: #fff;
 }
 
+.password-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.toggle-password {
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 0.9rem;
+  background: rgba(16, 34, 38, 0.08);
+  color: var(--ink-700);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle-password:active {
+  transform: translateY(1px);
+}
+
 .field input:focus,
 .field select:focus {
   outline: none;

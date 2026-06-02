@@ -39,6 +39,7 @@ export class UserSummaryComponent implements OnInit {
   isSaving = false;
   submitAttempted = false;
   updateErrorMessage = '';
+  showPassword = false;
 
   editModel = {
     userName: '',
@@ -82,6 +83,7 @@ export class UserSummaryComponent implements OnInit {
     }
 
     this.isEditing = true;
+    this.showPassword = false;
     this.submitAttempted = false;
     this.updateErrorMessage = '';
     this.editModel = {
@@ -97,6 +99,7 @@ export class UserSummaryComponent implements OnInit {
     }
 
     this.isEditing = false;
+    this.showPassword = false;
     this.submitAttempted = false;
     this.updateErrorMessage = '';
     this.editModel = {
@@ -135,6 +138,10 @@ export class UserSummaryComponent implements OnInit {
     } finally {
       this.isSaving = false;
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   private async loadUser(userId: string): Promise<void> {

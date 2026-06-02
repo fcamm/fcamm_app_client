@@ -45,7 +45,22 @@
 
       <label class="field">
         <span>Mot de passe</span>
-        <input type="password" name="password" placeholder="Mot de passe" [(ngModel)]="editModel.password" />
+        <div class="password-field">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            placeholder="Mot de passe"
+            [(ngModel)]="editModel.password"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="showPassword"
+          >
+            {{ showPassword ? 'Cacher' : 'Voir' }}
+          </button>
+        </div>
       </label>
 
       <label class="field field-wide">

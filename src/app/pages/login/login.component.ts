@@ -40,6 +40,7 @@ export class LoginComponent {
   submitAttempted = false;
   warmupSeconds = 0;
   warmupProgress = 0;
+  showPassword = false;
   private warmupIntervalId?: number;
   private submitTimeoutId?: number;
   private keepWarmupVisible = false;
@@ -78,6 +79,10 @@ export class LoginComponent {
 
   get canSubmit(): boolean {
     return this.model.userName.trim().length > 0 && this.model.password.trim().length > 0;
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   async submit(): Promise<void> {
