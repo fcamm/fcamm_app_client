@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service';
 
 interface DonatorOption {
   id: string;
@@ -116,10 +117,12 @@ export class ReceiptCreateComponent implements OnInit {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.applyDefaultSubjectForRole();
     await this.loadDonators();
   }
 
@@ -431,6 +434,13 @@ export class ReceiptCreateComponent implements OnInit {
     const normalized = raw.replace(',', '.').trim();
     const amount = Number(normalized);
     return Number.isFinite(amount) ? amount : 0;
+  }
+
+  private applyDefaultSubjectForRole(): void {
+    const role = this.authService.getUserRole();
+    if (role && role.toLowerCase() === 'tester') {
+      this.receiptModel.subject = 'exemple de motif de don';
+    }
   }
 
   private resolveActionEmail(donatorId: string): string {
